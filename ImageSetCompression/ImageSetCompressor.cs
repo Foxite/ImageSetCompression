@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ImageSetCompression {
 	public static class ImageSetCompressor {
-		public static void CompressSet(IReadOnlyCollection<string> sourceImages, string resultPath) {
+		public static void CompressSet(IReadOnlyCollection<string> sourceImages, string resultPath, bool multicore = false) {
 			if (sourceImages is null) {
 				throw new ArgumentNullException(nameof(sourceImages));
 			}
@@ -22,12 +23,21 @@ namespace ImageSetCompression {
 			}//*/
 
 			string baseImagePath = sourceImages.First();
-			using Bitmap baseImage = new Bitmap(baseImagePath);
 
-			foreach (string itemPath in sourceImages.Skip(1)) {
-				using var deltaImage = CompressImageInternal(itemPath, baseImage);
+			if (multicore) {
+				Parallel.ForEach(sourceImages.Skip(1), (itemPath) => {
+					using Bitmap baseImage = new Bitmap(baseImagePath);
+					using var deltaImage = CompressImageInternal(itemPath, baseImage);
 
-				deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+					deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+				});
+			} else {
+				using Bitmap baseImage = new Bitmap(baseImagePath);
+				foreach (string itemPath in sourceImages.Skip(1)) {
+					using var deltaImage = CompressImageInternal(itemPath, baseImage);
+
+					deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+				}
 			}
 		}
 
@@ -65,13 +75,21 @@ namespace ImageSetCompression {
 			return DecompressImageInternal(deltaImagePath, baseImage);
 		}
 
-		public static void DecompressImageSet(string baseImagePath, IReadOnlyCollection<string> sourceImages, string resultPath) {
-			using Bitmap baseImage = new Bitmap(baseImagePath);
+		public static void DecompressImageSet(string baseImagePath, IReadOnlyCollection<string> sourceImages, string resultPath, bool multicore = false) {
+			if (multicore) {
+				Parallel.ForEach(sourceImages.Skip(1), (itemPath) => {
+					using Bitmap baseImage = new Bitmap(baseImagePath);
+					using Bitmap resultImage = DecompressImageInternal(itemPath, baseImage);
 
-			foreach (string itemPath in sourceImages.Skip(1)) {
-				using Bitmap resultImage = DecompressImageInternal(itemPath, baseImage);
+					resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+				});
+			} else {
+				using Bitmap baseImage = new Bitmap(baseImagePath);
+				foreach (string itemPath in sourceImages.Skip(1)) {
+					using Bitmap resultImage = DecompressImageInternal(itemPath, baseImage);
 
-				resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+					resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+				}
 			}
 		}
 
