@@ -33,7 +33,7 @@ namespace ImageSetCompression.ConsoleApp {
 			string resultFolder = Console.ReadLine();
 
 			if (compress) {
-				ImageSetCompressor.CompressSet((IReadOnlyCollection<string>) paths, resultFolder);
+				ImageSetCompressor.CompressSet(paths.First(), paths.Skip(1), resultFolder);
 			} else {
 				ImageSetCompressor.DecompressImageSet(paths.First(), paths.Skip(1).ToList(), resultFolder);
 			}

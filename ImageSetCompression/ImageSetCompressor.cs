@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace ImageSetCompression {
 	public static class ImageSetCompressor {
-		public static void CompressSet(IReadOnlyCollection<string> sourceImages, string resultPath, bool multicore = false) {
+		public static void CompressSet(string baseImagePath, IEnumerable<string> setImages, string resultPath, bool multicore = false) {
+			/*
 			if (sourceImages is null) {
 				throw new ArgumentNullException(nameof(sourceImages));
 			}
@@ -17,15 +18,12 @@ namespace ImageSetCompression {
 			if (sourceImages.Select(path => Path.GetFileName(path)).Distinct().Count() != sourceImages.Count) {
 				throw new ArgumentException("The set contains two or more files with the same names. File names must be unique as the result files will be placed in the same folder.");
 			}
-			/*
 			if (sourceImages.Select(image => image.Value.Size).Distinct().Count() > 1) {
 				throw new ArgumentException("All images must be the same size.");
 			}//*/
 
-			string baseImagePath = sourceImages.First();
-
 			if (multicore) {
-				Parallel.ForEach(sourceImages.Skip(1), (itemPath) => {
+				Parallel.ForEach(setImages, (itemPath) => {
 					using Bitmap baseImage = new Bitmap(baseImagePath);
 					using var deltaImage = CompressImageInternal(itemPath, baseImage);
 
@@ -33,7 +31,7 @@ namespace ImageSetCompression {
 				});
 			} else {
 				using Bitmap baseImage = new Bitmap(baseImagePath);
-				foreach (string itemPath in sourceImages.Skip(1)) {
+				foreach (string itemPath in setImages) {
 					using var deltaImage = CompressImageInternal(itemPath, baseImage);
 
 					deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
@@ -75,9 +73,9 @@ namespace ImageSetCompression {
 			return DecompressImageInternal(deltaImagePath, baseImage);
 		}
 
-		public static void DecompressImageSet(string baseImagePath, IReadOnlyCollection<string> sourceImages, string resultPath, bool multicore = false) {
+		public static void DecompressImageSet(string baseImagePath, IEnumerable<string> setImages, string resultPath, bool multicore = false) {
 			if (multicore) {
-				Parallel.ForEach(sourceImages.Skip(1), (itemPath) => {
+				Parallel.ForEach(setImages, (itemPath) => {
 					using Bitmap baseImage = new Bitmap(baseImagePath);
 					using Bitmap resultImage = DecompressImageInternal(itemPath, baseImage);
 
@@ -85,7 +83,7 @@ namespace ImageSetCompression {
 				});
 			} else {
 				using Bitmap baseImage = new Bitmap(baseImagePath);
-				foreach (string itemPath in sourceImages.Skip(1)) {
+				foreach (string itemPath in setImages) {
 					using Bitmap resultImage = DecompressImageInternal(itemPath, baseImage);
 
 					resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Android;
 using Android.App;
 using Android.Content;
@@ -19,6 +20,10 @@ namespace ImageSetCompression.AndroidApp {
 	public class MainActivity : AppCompatActivity, NavigationView.IOnNavigationItemSelectedListener {
 		private const int PickBaseImage = 1;
 		private const int PickSetImages = 2;
+
+		private string m_BaseImagePath;
+		private Util.ClipDataList m_SetImages;
+		private string m_ResultFolder;
 
 		protected override void OnCreate(Bundle savedInstanceState) {
 			base.OnCreate(savedInstanceState);
@@ -44,11 +49,11 @@ namespace ImageSetCompression.AndroidApp {
 		}
 
 		private void OnCompressImages() {
-			
+			ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.Select(item => item.Uri.Path), m_ResultFolder, false);
 		}
 		
 		private void OnDecompressImages() {
-
+			ImageSetCompressor.DecompressImageSet(m_BaseImagePath, m_SetImages.Select(item => item.Uri.Path), m_ResultFolder, false);
 		}
 
 		private void OnSelectBaseImage() {
@@ -67,10 +72,6 @@ namespace ImageSetCompression.AndroidApp {
 			var intent = Intent.CreateChooser(chooseFile, "Select variant/delta images");
 			StartActivityForResult(intent, PickSetImages);
 		}
-
-		private string m_BaseImagePath;
-		private Util.ClipDataList m_SetImages;
-		private string m_ResultFolder;
 
 		protected override void OnActivityResult(int requestCode, Result resultCode, Intent data) {
 			if (resultCode == Result.Ok) {
