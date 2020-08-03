@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using Android;
 using Android.App;
+using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Android.Support.Design.Widget;
@@ -8,10 +12,14 @@ using Android.Support.V4.View;
 using Android.Support.V4.Widget;
 using Android.Support.V7.App;
 using Android.Views;
+using Android.Widget;
 
 namespace ImageSetCompression.AndroidApp {
 	[Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
 	public class MainActivity : AppCompatActivity, NavigationView.IOnNavigationItemSelectedListener {
+		private const int PickBaseImage = 1;
+		private const int PickSetImages = 2;
+
 		protected override void OnCreate(Bundle savedInstanceState) {
 			base.OnCreate(savedInstanceState);
 			Xamarin.Essentials.Platform.Init(this, savedInstanceState);
@@ -27,8 +35,52 @@ namespace ImageSetCompression.AndroidApp {
 			drawer.AddDrawerListener(toggle);
 			toggle.SyncState();
 
-			NavigationView navigationView = FindViewById<NavigationView>(Resource.Id.nav_view);
-			navigationView.SetNavigationItemSelectedListener(this);
+			FindViewById<NavigationView>(Resource.Id.nav_view).SetNavigationItemSelectedListener(this);
+
+			FindViewById<Button>(Resource.Id.compress).Click += (o, e) => OnCompressImages();
+			FindViewById<Button>(Resource.Id.decompress).Click += (o, e) => OnDecompressImages();
+			FindViewById<Button>(Resource.Id.selectBaseImage).Click += (o, e) => OnSelectBaseImage();
+			FindViewById<Button>(Resource.Id.selectSetImages).Click += (o, e) => OnSelectSetImages();
+		}
+
+		private void OnCompressImages() {
+			
+		}
+		
+		private void OnDecompressImages() {
+
+		}
+
+		private void OnSelectBaseImage() {
+			var chooseFile = new Intent(Intent.ActionGetContent);
+			chooseFile.AddCategory(Intent.CategoryOpenable);
+			chooseFile.SetType("image/*");
+			var intent = Intent.CreateChooser(chooseFile, "Select base image");
+			StartActivityForResult(intent, PickBaseImage);
+		}
+		
+		private void OnSelectSetImages() {
+			var chooseFile = new Intent(Intent.ActionGetContent);
+			chooseFile.AddCategory(Intent.CategoryOpenable);
+			chooseFile.PutExtra(Intent.ExtraAllowMultiple, true);
+			chooseFile.SetType("image/*");
+			var intent = Intent.CreateChooser(chooseFile, "Select variant/delta images");
+			StartActivityForResult(intent, PickSetImages);
+		}
+
+		private string m_BaseImagePath;
+		private Util.ClipDataList m_SetImages;
+		private string m_ResultFolder;
+
+		protected override void OnActivityResult(int requestCode, Result resultCode, Intent data) {
+			if (resultCode == Result.Ok) {
+				if (requestCode == PickBaseImage) {
+					m_BaseImagePath = data.Data.EncodedPath;
+					m_ResultFolder = Path.Combine(data.Data.EncodedPath, "result");
+				} else if (requestCode == PickSetImages) {
+					m_SetImages = data.ClipData.AsList();
+				}
+			}
 		}
 
 		public override void OnBackPressed() {
@@ -64,9 +116,7 @@ namespace ImageSetCompression.AndroidApp {
 			int id = item.ItemId;
 
 			if (id == Resource.Id.nav_compress) {
-				// Handle the camera action
-			} else if (id == Resource.Id.nav_decompress) {
-
+				
 			} else if (id == Resource.Id.nav_view_files) {
 
 			} else if (id == Resource.Id.nav_settings) {
@@ -85,6 +135,31 @@ namespace ImageSetCompression.AndroidApp {
 			Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
 			base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+		}
+	}
+
+	public static class Util {
+		public static ClipDataList AsList(this ClipData clipdata) => new ClipDataList(clipdata);
+
+		public sealed class ClipDataList : IReadOnlyList<ClipData.Item>, IDisposable {
+			public ClipDataList(ClipData clipData) {
+				ClipData = clipData;
+			}
+
+			public ClipData.Item this[int index] => ClipData.GetItemAt(index);
+
+			public int Count => ClipData.ItemCount;
+
+			public ClipData ClipData { get; }
+
+			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+			public IEnumerator<ClipData.Item> GetEnumerator() {
+				for (int i = 0; i < ClipData.ItemCount; i++) {
+					yield return ClipData.GetItemAt(i);
+				}
+			}
+
+			public void Dispose() => ClipData.Dispose();
 		}
 	}
 }

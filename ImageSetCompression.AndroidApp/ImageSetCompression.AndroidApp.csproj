@@ -38,6 +38,10 @@
     <AndroidUseSharedRuntime>True</AndroidUseSharedRuntime>
     <AndroidLinkMode>None</AndroidLinkMode>
     <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+    <AotAssemblies>false</AotAssemblies>
+    <EnableLLVM>false</EnableLLVM>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <BundleAssemblies>false</BundleAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -132,6 +136,12 @@
     <AndroidResource Include="Resources\drawable-v21\ic_menu_decompress.xml">
       <Generator>MSBuild:UpdateGeneratedFiles</Generator>
     </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ImageSetCompression\ImageSetCompression.csproj">
+      <Project>{5858af00-1303-41c4-9b07-18877a931460}</Project>
+      <Name>ImageSetCompression</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
