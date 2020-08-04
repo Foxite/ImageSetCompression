@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Android;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Android.Support.Design.Widget;
+using Android.Support.V4.App;
 using Android.Support.V4.View;
 using Android.Support.V4.Widget;
 using Android.Support.V7.App;
 using Android.Views;
 using Android.Widget;
+using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
 
 namespace ImageSetCompression.AndroidApp {
 	[Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
@@ -22,7 +26,7 @@ namespace ImageSetCompression.AndroidApp {
 		private const int PickSetImages = 2;
 
 		private string m_BaseImagePath;
-		private Util.ClipDataList m_SetImages;
+		private IEnumerable<string> m_SetImages;
 		private string m_ResultFolder;
 
 		protected override void OnCreate(Bundle savedInstanceState) {
@@ -46,14 +50,52 @@ namespace ImageSetCompression.AndroidApp {
 			FindViewById<Button>(Resource.Id.decompress).Click += (o, e) => OnDecompressImages();
 			FindViewById<Button>(Resource.Id.selectBaseImage).Click += (o, e) => OnSelectBaseImage();
 			FindViewById<Button>(Resource.Id.selectSetImages).Click += (o, e) => OnSelectSetImages();
+
+			RequestPermissions(new[] { Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage }, 1);
 		}
 
 		private void OnCompressImages() {
-			ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.Select(item => item.Uri.Path), m_ResultFolder, false);
+			Task.Run(() => {
+				int notificationID = Guid.NewGuid().GetHashCode();
+				var manager = this.GetSystemService<NotificationManager>();
+
+				try {
+					var notifBuilder = new NotificationCompat.Builder(ApplicationContext, "ImageSetCompressor")
+						.SetSmallIcon(Resource.Mipmap.ic_launcher)
+						.SetContentTitle("ImageSetCompressor")
+						.SetContentText("Compressing images...")
+						.SetProgress(0, 0, true);
+
+					manager.Notify(notificationID, notifBuilder.Build());
+
+					ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
+
+					manager.Notify(
+						notificationID,
+						new NotificationCompat.Builder(ApplicationContext, "ImageSetCompressor")
+							.SetSmallIcon(Resource.Mipmap.ic_launcher)
+							.SetContentTitle("ImageSetCompressor")
+							.SetOngoing(false)
+							.SetContentText("Operation completed")
+							.Build()
+					);
+				} catch (Exception e) {
+					manager.Notify(
+						notificationID,
+						new NotificationCompat.Builder(ApplicationContext, "ImageSetCompressor")
+							.SetSmallIcon(Resource.Mipmap.ic_launcher)
+							.SetOngoing(false)
+							.SetContentTitle("ImageSetCompressor")
+							.SetContentText("Operation failed")
+							.SetSubText(e.ToStringDemystified())
+							.Build()
+					);
+				}
+			});
 		}
 		
 		private void OnDecompressImages() {
-			ImageSetCompressor.DecompressImageSet(m_BaseImagePath, m_SetImages.Select(item => item.Uri.Path), m_ResultFolder, false);
+			ImageSetCompressor.DecompressImageSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
 		}
 
 		private void OnSelectBaseImage() {
@@ -76,10 +118,13 @@ namespace ImageSetCompression.AndroidApp {
 		protected override void OnActivityResult(int requestCode, Result resultCode, Intent data) {
 			if (resultCode == Result.Ok) {
 				if (requestCode == PickBaseImage) {
-					m_BaseImagePath = data.Data.EncodedPath;
-					m_ResultFolder = Path.Combine(data.Data.EncodedPath, "result");
+					m_BaseImagePath = data.Data.Path;
+					m_ResultFolder = Path.Combine(Path.GetDirectoryName(data.Data.Path), "result");
+					if (!Directory.Exists(m_ResultFolder)) {
+						Directory.CreateDirectory(m_ResultFolder);
+					}
 				} else if (requestCode == PickSetImages) {
-					m_SetImages = data.ClipData.AsList();
+					m_SetImages = new[] { data.Data.Path }; //data.ClipData.AsList();
 				}
 			}
 		}
@@ -140,6 +185,10 @@ namespace ImageSetCompression.AndroidApp {
 	}
 
 	public static class Util {
+		public static T GetSystemService<T>(this Context context) where T : Java.Lang.Object {
+			return (T) context.GetSystemService(Java.Lang.Class.FromType(typeof(T)));
+		}
+
 		public static ClipDataList AsList(this ClipData clipdata) => new ClipDataList(clipdata);
 
 		public sealed class ClipDataList : IReadOnlyList<ClipData.Item>, IDisposable {

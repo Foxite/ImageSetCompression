@@ -1,105 +1,72 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace ImageSetCompression {
 	public static class ImageSetCompressor {
-		public static void CompressSet(string baseImagePath, IEnumerable<string> setImages, string resultPath, bool multicore = false) {
-			/*
-			if (sourceImages is null) {
-				throw new ArgumentNullException(nameof(sourceImages));
-			}
-			if (sourceImages.Count < 2) {
-				throw new ArgumentException("A set must consist of at least 2 items.");
-			}
-			if (sourceImages.Select(path => Path.GetFileName(path)).Distinct().Count() != sourceImages.Count) {
-				throw new ArgumentException("The set contains two or more files with the same names. File names must be unique as the result files will be placed in the same folder.");
-			}
-			if (sourceImages.Select(image => image.Value.Size).Distinct().Count() > 1) {
-				throw new ArgumentException("All images must be the same size.");
-			}//*/
+		public static void CompressSet(string baseImagePath, IEnumerable<string> setImages, string resultPath) {
+			using var baseImage = Image.Load<Argb32>(baseImagePath);
+			foreach (string itemPath in setImages) {
+				using var deltaImage = CompressImageInternal(itemPath, baseImage);
 
-			if (multicore) {
-				Parallel.ForEach(setImages, (itemPath) => {
-					using Bitmap baseImage = new Bitmap(baseImagePath);
-					using var deltaImage = CompressImageInternal(itemPath, baseImage);
-
-					deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
-				});
-			} else {
-				using Bitmap baseImage = new Bitmap(baseImagePath);
-				foreach (string itemPath in setImages) {
-					using var deltaImage = CompressImageInternal(itemPath, baseImage);
-
-					deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
-				}
+				deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
 			}
 		}
 
-		public static Bitmap CompressImage(string baseImagePath, string variantImagePath) {
-			using var baseImage = new Bitmap(baseImagePath);
+		public static Image<Argb32> CompressImage(string baseImagePath, string variantImagePath) {
+			using var baseImage = Image.Load<Argb32>(baseImagePath);
 			return CompressImageInternal(variantImagePath, baseImage);
 		}
 
-		private static Bitmap CompressImageInternal(string variantImagePath, Bitmap baseImage) {
-			using var variantImage = new Bitmap(variantImagePath);
-			var deltaImage = new Bitmap(variantImage.Width, variantImage.Height);
+		private static Image<Argb32> CompressImageInternal(string variantImagePath, Image<Argb32> baseImage) {
+			using var variantImage = Image.Load<Argb32>(variantImagePath);
+			var deltaImage = new Image<Argb32>(variantImage.Width, variantImage.Height);
 
 			for (int x = 0; x < deltaImage.Width; x++) {
 				for (int y = 0; y < deltaImage.Height; y++) {
-					deltaImage.SetPixel(x, y, GetColorDelta(baseImage.GetPixel(x, y), variantImage.GetPixel(x, y)));
+					deltaImage[x, y] = GetColorDelta(baseImage[x, y], variantImage[x, y]);
 				}
 			}
 			return deltaImage;
 		}
 
-		public static Bitmap DecompressImageInternal(string deltaImagePath, Bitmap baseImage) {
-			using var deltaImage = new Bitmap(deltaImagePath);
-			var resultImage = new Bitmap(baseImage.Width, baseImage.Height);
+		public static Image<Argb32> DecompressImageInternal(string deltaImagePath, Image<Argb32> baseImage) {
+			using var deltaImage = Image.Load<Argb32>(deltaImagePath);
+			var resultImage = new Image<Argb32>(baseImage.Width, baseImage.Height);
 
 			for (int x = 0; x < deltaImage.Width; x++) {
 				for (int y = 0; y < deltaImage.Height; y++) {
-					resultImage.SetPixel(x, y, GetVariantColor(baseImage.GetPixel(x, y), deltaImage.GetPixel(x, y)));
+					resultImage[x, y] = GetVariantColor(baseImage[x, y], deltaImage[x, y]);
 				}
 			}
 			return resultImage;
 		}
 
-		public static Bitmap DecompressImage(string baseImagePath, string deltaImagePath) {
-			using var baseImage = new Bitmap(baseImagePath);
+		public static Image<Argb32> DecompressImage(string baseImagePath, string deltaImagePath) {
+			using var baseImage = Image.Load<Argb32>(baseImagePath);
 			return DecompressImageInternal(deltaImagePath, baseImage);
 		}
 
-		public static void DecompressImageSet(string baseImagePath, IEnumerable<string> setImages, string resultPath, bool multicore = false) {
-			if (multicore) {
-				Parallel.ForEach(setImages, (itemPath) => {
-					using Bitmap baseImage = new Bitmap(baseImagePath);
-					using Bitmap resultImage = DecompressImageInternal(itemPath, baseImage);
+		public static void DecompressImageSet(string baseImagePath, IEnumerable<string> setImages, string resultPath) {
+			using var baseImage = Image.Load<Argb32>(baseImagePath);
+			foreach (string itemPath in setImages) {
+				using Image<Argb32> resultImage = DecompressImageInternal(itemPath, baseImage);
 
-					resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
-				});
-			} else {
-				using Bitmap baseImage = new Bitmap(baseImagePath);
-				foreach (string itemPath in setImages) {
-					using Bitmap resultImage = DecompressImageInternal(itemPath, baseImage);
-
-					resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
-				}
+				resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
 			}
 		}
 
-		private static Color GetColorDelta(Color baseColor, Color variantColor) {
+		private static Argb32 GetColorDelta(Argb32 baseColor, Argb32 variantColor) {
 			unchecked {
-				return Color.FromArgb((byte) (variantColor.A - baseColor.A), (byte) (variantColor.R - baseColor.R), (byte) (variantColor.G - baseColor.G), (byte) (variantColor.B - baseColor.B));
+				return new Argb32((byte) (variantColor.R - baseColor.R), (byte) (variantColor.G - baseColor.G), (byte) (variantColor.B - baseColor.B), (byte) (variantColor.A - baseColor.A));
 			}
 		}
 
-		private static Color GetVariantColor(Color baseColor, Color colorDelta) {
+		private static Argb32 GetVariantColor(Argb32 baseColor, Argb32 colorDelta) {
 			unchecked {
-				return Color.FromArgb((byte) (baseColor.A + colorDelta.A), (byte) (baseColor.R + colorDelta.R), (byte) (baseColor.G + colorDelta.G), (byte) (baseColor.B + colorDelta.B));
+				return new Argb32((byte) (baseColor.R + colorDelta.R), (byte) (baseColor.G + colorDelta.G), (byte) (baseColor.B + colorDelta.B), (byte) (baseColor.A + colorDelta.A));
 			}
 		}
 	}
