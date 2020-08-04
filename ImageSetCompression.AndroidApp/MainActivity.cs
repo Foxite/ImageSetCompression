@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -36,25 +35,30 @@ namespace ImageSetCompression.AndroidApp {
 			Android.Support.V7.Widget.Toolbar toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
 			SetSupportActionBar(toolbar);
 
-			FloatingActionButton fab = FindViewById<FloatingActionButton>(Resource.Id.fab);
-			fab.Click += FabOnClick;
-
 			DrawerLayout drawer = FindViewById<DrawerLayout>(Resource.Id.drawer_layout);
-			ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, Resource.String.navigation_drawer_open, Resource.String.navigation_drawer_close);
+			var toggle = new ActionBarDrawerToggle(this, drawer, toolbar, Resource.String.navigation_drawer_open, Resource.String.navigation_drawer_close);
 			drawer.AddDrawerListener(toggle);
 			toggle.SyncState();
 
 			FindViewById<NavigationView>(Resource.Id.nav_view).SetNavigationItemSelectedListener(this);
 
-			FindViewById<Button>(Resource.Id.compress).Click += (o, e) => OnCompressImages();
-			FindViewById<Button>(Resource.Id.decompress).Click += (o, e) => OnDecompressImages();
+			FindViewById<Button>(Resource.Id.compress).Click += (o, e) => AsynchronousOperation("Compressing images...", () => {
+				File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
+				ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
+			});
+
+			FindViewById<Button>(Resource.Id.decompress).Click += (o, e) => AsynchronousOperation("Decompresing images...", () => {
+				File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
+				ImageSetCompressor.DecompressImageSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
+			});
+
 			FindViewById<Button>(Resource.Id.selectBaseImage).Click += (o, e) => OnSelectBaseImage();
 			FindViewById<Button>(Resource.Id.selectSetImages).Click += (o, e) => OnSelectSetImages();
 
 			RequestPermissions(new[] { Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage }, 1);
 		}
 
-		private void OnCompressImages() {
+		private void AsynchronousOperation(string label, Action operation) {
 			Task.Run(() => {
 				int notificationID = Guid.NewGuid().GetHashCode();
 				var manager = this.GetSystemService<NotificationManager>();
@@ -63,12 +67,12 @@ namespace ImageSetCompression.AndroidApp {
 					var notifBuilder = new NotificationCompat.Builder(ApplicationContext, "ImageSetCompressor")
 						.SetSmallIcon(Resource.Mipmap.ic_launcher)
 						.SetContentTitle("ImageSetCompressor")
-						.SetContentText("Compressing images...")
+						.SetContentText(label)
 						.SetProgress(0, 0, true);
 
 					manager.Notify(notificationID, notifBuilder.Build());
 
-					ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
+					operation();
 
 					manager.Notify(
 						notificationID,
@@ -90,12 +94,9 @@ namespace ImageSetCompression.AndroidApp {
 							.SetSubText(e.ToStringDemystified())
 							.Build()
 					);
+					throw;
 				}
 			});
-		}
-		
-		private void OnDecompressImages() {
-			ImageSetCompressor.DecompressImageSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
 		}
 
 		private void OnSelectBaseImage() {
@@ -138,26 +139,6 @@ namespace ImageSetCompression.AndroidApp {
 			}
 		}
 
-		public override bool OnCreateOptionsMenu(IMenu menu) {
-			MenuInflater.Inflate(Resource.Menu.menu_main, menu);
-			return true;
-		}
-
-		public override bool OnOptionsItemSelected(IMenuItem item) {
-			int id = item.ItemId;
-			if (id == Resource.Id.action_settings) {
-				return true;
-			}
-
-			return base.OnOptionsItemSelected(item);
-		}
-
-		private void FabOnClick(object sender, EventArgs eventArgs) {
-			View view = (View) sender;
-			Snackbar.Make(view, "Replace with your own action", Snackbar.LengthLong)
-				.SetAction("Action", (Android.Views.View.IOnClickListener) null).Show();
-		}
-
 		public bool OnNavigationItemSelected(IMenuItem item) {
 			int id = item.ItemId;
 
@@ -177,40 +158,11 @@ namespace ImageSetCompression.AndroidApp {
 			drawer.CloseDrawer(GravityCompat.Start);
 			return true;
 		}
+
 		public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults) {
 			Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
 			base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 		}
 	}
-
-	public static class Util {
-		public static T GetSystemService<T>(this Context context) where T : Java.Lang.Object {
-			return (T) context.GetSystemService(Java.Lang.Class.FromType(typeof(T)));
-		}
-
-		public static ClipDataList AsList(this ClipData clipdata) => new ClipDataList(clipdata);
-
-		public sealed class ClipDataList : IReadOnlyList<ClipData.Item>, IDisposable {
-			public ClipDataList(ClipData clipData) {
-				ClipData = clipData;
-			}
-
-			public ClipData.Item this[int index] => ClipData.GetItemAt(index);
-
-			public int Count => ClipData.ItemCount;
-
-			public ClipData ClipData { get; }
-
-			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-			public IEnumerator<ClipData.Item> GetEnumerator() {
-				for (int i = 0; i < ClipData.ItemCount; i++) {
-					yield return ClipData.GetItemAt(i);
-				}
-			}
-
-			public void Dispose() => ClipData.Dispose();
-		}
-	}
 }
-
