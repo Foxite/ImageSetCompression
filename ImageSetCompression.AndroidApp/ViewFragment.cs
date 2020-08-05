@@ -4,9 +4,9 @@ using System.Linq;
 using Android.Content;
 using Android.Graphics;
 using Android.OS;
-using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
+using AndroidX.Fragment.App;
 
 namespace ImageSetCompression.AndroidApp {
 	public class ViewFragment : Fragment {
@@ -17,7 +17,7 @@ namespace ImageSetCompression.AndroidApp {
 		private IList<string> m_SetImages;
 
 		public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			var ret = inflater.Inflate(Resource.Layout.fragment_view, container);
+			var ret = inflater.Inflate(Resource.Layout.fragment_view, container, false);
 
 			ret.FindViewById<Button>(Resource.Id.viewSelectBaseImage).Click += (o, e) => OnSelectBaseImage();
 			ret.FindViewById<Button>(Resource.Id.viewSelectSetImages).Click += (o, e) => OnSelectSetImages();

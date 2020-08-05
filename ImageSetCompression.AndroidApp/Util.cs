@@ -33,4 +33,3 @@ namespace ImageSetCompression.AndroidApp {
 		}
 	}
 }
-

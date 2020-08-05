@@ -1,18 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?> 
-<android.support.v7.preference.PreferenceScreen
+<PreferenceScreen
     xmlns:app="http://schemas.android.com/apk/res-auto">
-	
-	<android.support.v7.preference.BoolPreferenceCompat
-		app:key="copyBase"
-		app:title="Copy base image to result folder" />
 
-    <android.support.v7.preference.SwitchPreferenceCompat
+    <SwitchPreferenceCompat
         app:key="notifications"
         app:title="Enable message notifications"/>
 
-    <android.support.v7.preference.Preference
+    <Preference
         app:key="feedback"
         app:title="Send feedback"
         app:summary="Report technical issues or suggest new features"/>
 
-</android.support.v7.preference.PreferenceScreen>
+</PreferenceScreen>

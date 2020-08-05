@@ -6,9 +6,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Android.Content;
 using Android.OS;
-using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
+using AndroidX.Core.App;
+using AndroidX.Fragment.App;
 
 namespace ImageSetCompression.AndroidApp {
 	public class CompressFragment : Fragment {
@@ -20,7 +21,7 @@ namespace ImageSetCompression.AndroidApp {
 		private string m_ResultFolder;
 
 		public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			var ret = inflater.Inflate(Resource.Layout.fragment_compress, container);
+			var ret = inflater.Inflate(Resource.Layout.fragment_compress, container, false);
 
 			ret.FindViewById<Button>(Resource.Id.compressCompress).Click += (o, e) => AsynchronousOperation("Compressing images...", () => {
 				File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
