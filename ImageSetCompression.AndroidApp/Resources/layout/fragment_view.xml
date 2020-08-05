@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
+    
     <Button
         android:text="Select base image"
         android:layout_width="match_parent"
@@ -46,8 +46,10 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/viewImageTitle" />
-
+        android:id="@+id/viewImageTitle"
+        android:textAlignment="center"
+        android:text="file name" />
+    
     <ImageView
         android:src="@android:drawable/ic_menu_gallery"
         android:layout_width="match_parent"
