@@ -1,27 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     android:orientation="vertical"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:showIn="@layout/app_bar_main">
-    
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
     <Button
         android:text="Select base image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="25px"
-        android:id="@+id/compressSelectBaseImage" />
-
+        android:id="@+id/viewSelectBaseImage" />
     <Button
-        android:text="Select set images"
+        android:text="Select delta images"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="25px"
-        android:id="@+id/compressSelectSetImages" />
+        android:id="@+id/viewSelectSetImages" />
 
     <LinearLayout
         android:orientation="horizontal"
@@ -31,21 +25,33 @@
         android:layout_height="wrap_content">
 
         <Button
-            android:text="Compress"
+            android:text="&lt;&lt;"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:minHeight="25px"
-            android:id="@+id/compressCompress" />
+            android:id="@+id/viewPrevImage" />
 
         <Button
-            android:text="Decompress"
+            android:text="&gt;&gt;"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:minHeight="25px"
-            android:id="@+id/compressDecompress" />
+            android:id="@+id/viewNextImage" />
 
     </LinearLayout>
-    
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/viewImageTitle" />
+
+    <ImageView
+        android:src="@android:drawable/ic_menu_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/viewImageView"
+        android:adjustViewBounds="true" />
+
 </LinearLayout>

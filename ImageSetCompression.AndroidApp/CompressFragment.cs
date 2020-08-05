@@ -20,20 +20,20 @@ namespace ImageSetCompression.AndroidApp {
 		private string m_ResultFolder;
 
 		public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			var ret = inflater.Inflate(Resource.Layout.content_compress, container);
+			var ret = inflater.Inflate(Resource.Layout.fragment_compress, container);
 
-			ret.FindViewById<Button>(Resource.Id.compress).Click += (o, e) => AsynchronousOperation("Compressing images...", () => {
+			ret.FindViewById<Button>(Resource.Id.compressCompress).Click += (o, e) => AsynchronousOperation("Compressing images...", () => {
 				File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
 				ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
 			});
 
-			ret.FindViewById<Button>(Resource.Id.decompress).Click += (o, e) => AsynchronousOperation("Decompresing images...", () => {
+			ret.FindViewById<Button>(Resource.Id.compressDecompress).Click += (o, e) => AsynchronousOperation("Decompresing images...", () => {
 				File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
 				ImageSetCompressor.DecompressImageSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
 			});
 
-			ret.FindViewById<Button>(Resource.Id.selectBaseImage).Click += (o, e) => OnSelectBaseImage();
-			ret.FindViewById<Button>(Resource.Id.selectSetImages).Click += (o, e) => OnSelectSetImages();
+			ret.FindViewById<Button>(Resource.Id.compressSelectBaseImage).Click += (o, e) => OnSelectBaseImage();
+			ret.FindViewById<Button>(Resource.Id.compressSelectSetImages).Click += (o, e) => OnSelectSetImages();
 
 			return ret;
 		}

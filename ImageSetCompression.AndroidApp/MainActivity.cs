@@ -55,7 +55,7 @@ namespace ImageSetCompression.AndroidApp {
 			if (id == Resource.Id.nav_compress) {
 				switchFragment<CompressFragment>();
 			} else if (id == Resource.Id.nav_view_files) {
-				//switchFragment<ViewFragment>();
+				switchFragment<ViewFragment>();
 			} else if (id == Resource.Id.nav_settings) {
 				//switchFragment<SettingsFragment>();
 			} else if (id == Resource.Id.nav_share) {
