@@ -4,10 +4,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Android;
 using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using AndroidX.AppCompat.App;
 using AndroidX.Core.App;
 using AndroidX.Fragment.App;
 
@@ -17,43 +19,55 @@ namespace ImageSetCompression.AndroidApp {
 		private const int PickSetImages = 2;
 
 		private string m_BaseImagePath;
-		private IEnumerable<string> m_SetImages;
+		private IList<string> m_SetImages;
 		private string m_ResultFolder;
 
 		public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-			var ret = inflater.Inflate(Resource.Layout.fragment_compress, container, false);
+			if (Activity.CheckSelfPermission(Manifest.Permission.WriteExternalStorage) == Android.Content.PM.Permission.Denied) {
+				new AlertDialog.Builder(Activity.ApplicationContext)
+					.SetTitle("Permission is required")
+					.SetMessage("Permission to write files is required to compress images.")
+					.SetPositiveButton("OK", (o, e) => ((MainActivity) Activity).SwitchFragment<ViewFragment>())
+					.Create();
 
-			ret.FindViewById<Button>(Resource.Id.compressCompress).Click += (o, e) => AsynchronousOperation("Compressing images...", () => {
-				File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
-				ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
-			});
+				return new View(Activity.ApplicationContext);
+			} else {
+				var ret = inflater.Inflate(Resource.Layout.fragment_compress, container, false);
 
-			ret.FindViewById<Button>(Resource.Id.compressDecompress).Click += (o, e) => AsynchronousOperation("Decompresing images...", () => {
-				File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
-				ImageSetCompressor.DecompressImageSet(m_BaseImagePath, m_SetImages.Select(item => item), m_ResultFolder);
-			});
+				ret.FindViewById<Button>(Resource.Id.compressCompress).Click += (o, e) => AsynchronousOperation("Compressing images...", (progress) => {
+					File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
+					ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.ListSelect(item => item), m_ResultFolder, progress);
+				});
 
-			ret.FindViewById<Button>(Resource.Id.compressSelectBaseImage).Click += (o, e) => OnSelectBaseImage();
-			ret.FindViewById<Button>(Resource.Id.compressSelectSetImages).Click += (o, e) => OnSelectSetImages();
+				ret.FindViewById<Button>(Resource.Id.compressDecompress).Click += (o, e) => AsynchronousOperation("Decompresing images...", (progress) => {
+					File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
+					ImageSetCompressor.DecompressSet(m_BaseImagePath, m_SetImages.ListSelect(item => item), m_ResultFolder, progress);
+				});
 
-			return ret;
+				ret.FindViewById<Button>(Resource.Id.compressSelectBaseImage).Click += (o, e) => OnSelectBaseImage();
+				ret.FindViewById<Button>(Resource.Id.compressSelectSetImages).Click += (o, e) => OnSelectSetImages();
+
+				return ret;
+			}
 		}
 
-		private void AsynchronousOperation(string label, Action operation) {
+		private void AsynchronousOperation(string label, Action<IProgress<float>> operation) {
 			Task.Run(() => {
 				int notificationID = Guid.NewGuid().GetHashCode();
 				var manager = Activity.ApplicationContext.GetSystemService<Android.App.NotificationManager>();
 
 				try {
-					var notifBuilder = new NotificationCompat.Builder(Activity.ApplicationContext, "ImageSetCompressor")
+					NotificationCompat.Builder builder = new NotificationCompat.Builder(Activity.ApplicationContext, "ImageSetCompressor")
 						.SetSmallIcon(Resource.Mipmap.ic_launcher)
 						.SetContentTitle("ImageSetCompressor")
 						.SetContentText(label)
-						.SetProgress(0, 0, true);
+						.SetProgress(100, 0, false);
 
-					manager.Notify(notificationID, notifBuilder.Build());
+					manager.Notify(notificationID, builder.Build());
 
-					operation();
+					var progress = new Progress<float>();
+					progress.ProgressChanged += (o, p) => builder.SetProgress(100, (int) (p * 100), false);
+					operation(progress);
 
 					manager.Notify(
 						notificationID,
@@ -106,6 +120,7 @@ namespace ImageSetCompression.AndroidApp {
 						Directory.CreateDirectory(m_ResultFolder);
 					}
 				} else if (requestCode == PickSetImages) {
+					// TODO fix this (also in ViewFragment)
 					m_SetImages = new[] { data.Data.Path }; //data.ClipData.AsList();
 				}
 			}

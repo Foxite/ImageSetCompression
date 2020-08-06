@@ -43,18 +43,16 @@
 
     </LinearLayout>
 
-    <TextView
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/pager"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/viewImageTitle"
-        android:textAlignment="center"
-        android:text="file name" />
-    
-    <ImageView
-        android:src="@android:drawable/ic_menu_gallery"
+        android:layout_height="match_parent" />
+
+    <!--
+    <androidx.fragment.app.FragmentContainerView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/viewImageView"
-        android:adjustViewBounds="true" />
+        android:layout_height="fill_parent"
+        android:id="@+id/viewFragmentContainer" />
+    -->
 
 </LinearLayout>

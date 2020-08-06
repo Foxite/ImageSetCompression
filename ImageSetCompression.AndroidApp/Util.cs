@@ -32,4 +32,63 @@ namespace ImageSetCompression.AndroidApp {
 			public void Dispose() => ClipData.Dispose();
 		}
 	}
+
+	public static class LinqExtensions {
+		/// <summary>
+		/// Returns an IReadOnlyCollection wrapping <paramref name="source"/>, which applies <paramref name="selector"/> when enumerating objects.
+		/// </summary>
+		public static IReadOnlyCollection<TSelect> CollectionSelect<TCollection, TSelect>(this ICollection<TCollection> source, Func<TCollection, TSelect> selector) =>
+			new SelectedCollection<TCollection, TSelect>(source, selector);
+
+		private class SelectedCollection<TCollection, TSelect> : IReadOnlyCollection<TSelect> {
+			private readonly ICollection<TCollection> m_Source;
+			private readonly Func<TCollection, TSelect> m_Selector;
+
+			public SelectedCollection(ICollection<TCollection> source, Func<TCollection, TSelect> selector) {
+				m_Source = source;
+				m_Selector = selector;
+			}
+
+			public int Count => m_Source.Count;
+
+			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+			public IEnumerator<TSelect> GetEnumerator() {
+				foreach (TCollection item in m_Source) {
+					yield return m_Selector(item);
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Returns an IReadOnlyList wrapping <paramref name="source"/>, which applies <paramref name="selector"/> when enumerating objects and indexing the list.
+		/// </summary>
+		/// <typeparam name="TList"></typeparam>
+		/// <typeparam name="TSelect"></typeparam>
+		/// <param name="source"></param>
+		/// <param name="selector"></param>
+		/// <returns></returns>
+		public static IReadOnlyList<TSelect> ListSelect<TList, TSelect>(this IList<TList> source, Func<TList, TSelect> selector) =>
+			new SelectedList<TList, TSelect>(source, selector);
+
+		private class SelectedList<TList, TSelect> : IReadOnlyList<TSelect> {
+			private readonly IList<TList> m_Source;
+			private readonly Func<TList, TSelect> m_Selector;
+
+			public SelectedList(IList<TList> source, Func<TList, TSelect> selector) {
+				m_Source = source;
+				m_Selector = selector;
+			}
+
+			public int Count => m_Source.Count;
+
+			public TSelect this[int index] => m_Selector(m_Source[index]);
+
+			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+			public IEnumerator<TSelect> GetEnumerator() {
+				foreach (TList item in m_Source) {
+					yield return m_Selector(item);
+				}
+			}
+		}
+	}
 }

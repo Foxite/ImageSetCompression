@@ -1,11 +1,10 @@
 ﻿using Android.OS;
-using Android.Preferences;
+using AndroidX.Preference;
 
 namespace ImageSetCompression.AndroidApp {
-	public class SettingsFragment {
-		public void OnCreate(Bundle savedInstanceState) {
-			//base.OnCreate(savedInstanceState);
-			//AddPreferencesFromResource(Resource.Xml.preferences);
+	public class SettingsFragment : PreferenceFragmentCompat {
+		public override void OnCreatePreferences(Bundle savedInstanceState, string rootKey) {
+			SetPreferencesFromResource(Resource.Xml.preferences, rootKey);
 		}
 	}
 }

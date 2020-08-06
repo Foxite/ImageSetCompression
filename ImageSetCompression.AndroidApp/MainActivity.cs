@@ -28,6 +28,20 @@ namespace ImageSetCompression.AndroidApp {
 			FindViewById<NavigationView>(Resource.Id.nav_view).SetNavigationItemSelectedListener(this);
 
 			RequestPermissions(new[] { Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage }, 1);
+
+			if (CheckSelfPermission(Manifest.Permission.ReadExternalStorage) == Android.Content.PM.Permission.Granted) {
+				if (CheckSelfPermission(Manifest.Permission.WriteExternalStorage) == Android.Content.PM.Permission.Granted) {
+					SwitchFragment<CompressFragment>();
+				} else {
+					SwitchFragment<ViewFragment>();
+				}
+			} else {
+				new AlertDialog.Builder(ApplicationContext)
+					.SetTitle("Permission is required")
+					.SetMessage("We need permission to read files in order to do anything. Additionally, permission to write files is required to compress images.")
+					.SetPositiveButton("OK", (o, e) => Finish())
+					.Create();
+			}
 		}
 
 		public override void OnBackPressed() {
@@ -39,24 +53,20 @@ namespace ImageSetCompression.AndroidApp {
 			}
 		}
 
+		internal void SwitchFragment<T>() where T : Fragment, new() =>
+			SupportFragmentManager.BeginTransaction()
+				.Replace(Resource.Id.fragment_container, new T())
+				.Commit();
+
 		public bool OnNavigationItemSelected(IMenuItem item) {
 			int id = item.ItemId;
 
-			void switchFragment<T>() where T : Fragment, new() {
-				FragmentTransaction tx = SupportFragmentManager.BeginTransaction();
-				if (SupportFragmentManager.Fragments.Count != 0) {
-					tx.Remove(SupportFragmentManager.Fragments[0]);
-				}
-				tx.Add(Resource.Id.fragment_container, new T());
-				tx.Commit();
-			}
-
 			if (id == Resource.Id.nav_compress) {
-				switchFragment<CompressFragment>();
+				SwitchFragment<CompressFragment>();
 			} else if (id == Resource.Id.nav_view_files) {
-				switchFragment<ViewFragment>();
+				SwitchFragment<ViewFragment>();
 			} else if (id == Resource.Id.nav_settings) {
-				//switchFragment<SettingsFragment>();
+				SwitchFragment<SettingsFragment>();
 			} else if (id == Resource.Id.nav_share) {
 
 			} else if (id == Resource.Id.nav_send) {
