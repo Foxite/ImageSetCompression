@@ -66,6 +66,7 @@
     <Reference Include="System.Numerics.Vectors" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ImageListAdapter.cs" />
     <Compile Include="SettingsFragment.cs" />
     <Compile Include="ViewFragment.cs" />
     <Compile Include="MainActivity.cs" />

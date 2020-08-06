@@ -121,10 +121,9 @@ namespace ImageSetCompression.AndroidApp {
 					}
 				} else if (requestCode == PickSetImages) {
 					// TODO fix this (also in ViewFragment)
-					m_SetImages = new[] { data.Data.Path }; //data.ClipData.AsList();
+					m_SetImages = new[] { data.Data.Path };
 				}
 			}
 		}
-
 	}
 }
