@@ -38,7 +38,7 @@ namespace ImageSetCompression {
 			}
 		}
 
-		public static void CompressSet(string baseImagePath, ICollection<string> setImages, string resultPath, IProgress<float> progress) {
+		public static void CompressSet(string baseImagePath, IReadOnlyCollection<string> setImages, string resultPath, IProgress<float> progress) {
 			using var baseImage = Image.Load<Argb32>(baseImagePath);
 
 			int i = 0;
@@ -84,7 +84,7 @@ namespace ImageSetCompression {
 			}
 		}
 
-		public static void DecompressSet(string baseImagePath, ICollection<string> setImages, string resultPath, IProgress<float> progress) {
+		public static void DecompressSet(string baseImagePath, IReadOnlyCollection<string> setImages, string resultPath, IProgress<float> progress) {
 			using var baseImage = Image.Load<Argb32>(baseImagePath);
 
 			int i = 0;
