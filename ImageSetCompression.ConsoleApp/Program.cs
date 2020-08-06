@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ImageSetCompression.ConsoleApp {
 	public class Program {
@@ -32,10 +33,19 @@ namespace ImageSetCompression.ConsoleApp {
 			Console.WriteLine("Enter the path of the result folder:");
 			string resultFolder = Console.ReadLine();
 
+			int top = Console.WindowHeight - 1;
+			int width = Console.WindowWidth - "[...%] ".Length;
+
+			var progress = new Progress<float>(p => {
+				Console.SetCursorPosition(0, top);
+				Console.Write($"[{p,4:P0}] {new string('#', (int) (p * width))}");
+			});
+
+			var setImages = new List<string>(paths.Skip(1));
 			if (compress) {
-				ImageSetCompressor.CompressSet(paths.First(), paths.Skip(1), resultFolder);
+				ImageSetCompressor.CompressSet(paths.First(), setImages, resultFolder, progress);
 			} else {
-				ImageSetCompressor.DecompressSet(paths.First(), paths.Skip(1), resultFolder);
+				ImageSetCompressor.DecompressSet(paths.First(), setImages, resultFolder, progress);
 			}
 		}
 	}
