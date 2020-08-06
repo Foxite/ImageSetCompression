@@ -17,7 +17,7 @@ namespace ImageSetCompression {
 
 				if (line > deltaImage.Width / 100) {
 					line = 0;
-					progress?.Report(++lineProgress);
+					progress?.Report(++lineProgress / 100f);
 				}
 			}
 			return deltaImage;
@@ -62,7 +62,7 @@ namespace ImageSetCompression {
 
 				if (line > deltaImage.Width / 100) {
 					line = 0;
-					progress?.Report(++lineProgress);
+					progress?.Report(++lineProgress / 100f);
 				}
 			}
 			return resultImage;
