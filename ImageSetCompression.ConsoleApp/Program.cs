@@ -9,7 +9,7 @@ namespace ImageSetCompression.ConsoleApp {
 			Console.WriteLine("Compress or decompress files?");
 			string input = Console.ReadLine();
 
-			bool compress = input.StartsWith("c", System.StringComparison.InvariantCultureIgnoreCase);
+			bool compress = input.StartsWith("c", StringComparison.InvariantCultureIgnoreCase);
 
 			ICollection<string> paths;
 			if (args.Length == 0) {
@@ -35,7 +35,7 @@ namespace ImageSetCompression.ConsoleApp {
 			if (compress) {
 				ImageSetCompressor.CompressSet(paths.First(), paths.Skip(1), resultFolder);
 			} else {
-				ImageSetCompressor.DecompressImageSet(paths.First(), paths.Skip(1).ToList(), resultFolder);
+				ImageSetCompressor.DecompressSet(paths.First(), paths.Skip(1), resultFolder);
 			}
 		}
 	}
