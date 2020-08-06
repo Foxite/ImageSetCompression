@@ -66,7 +66,14 @@ namespace ImageSetCompression.AndroidApp {
 					manager.Notify(notificationID, builder.Build());
 
 					var progress = new Progress<float>();
-					progress.ProgressChanged += (o, p) => builder.SetProgress(100, (int) (p * 100), false);
+					progress.ProgressChanged += (o, p) => {
+						manager.Notify(
+							notificationID,
+							builder
+								.SetProgress(100, (int) (p * 100), false)
+								.Build()
+						);
+					};
 					operation(progress);
 
 					manager.Notify(

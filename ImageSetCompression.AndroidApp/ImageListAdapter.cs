@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Android.Graphics;
 using Android.OS;
@@ -45,20 +46,31 @@ namespace ImageSetCompression.AndroidApp {
 
 				// TODO: linear progress bar when loading image
 				view.FindViewById<TextView>(Resource.Id.viewImageTitle).SetText(System.IO.Path.GetFileName(m_DeltaImagePath), TextView.BufferType.Normal);
-				Task.Run(() => {
-					Bitmap bmp;
-					if (m_DeltaImagePath == m_BaseImagePath) {
-						bmp = BitmapFactory.DecodeFile(m_BaseImagePath);
-					} else {
-						// TODO: in memory decompression, instead of saving it to FS and loading it right back
-						string tempFile = System.IO.Path.GetTempFileName() + ".jpg";
-						using (SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Argb32> slBitmap = ImageSetCompressor.DecompressImage(m_BaseImagePath, m_DeltaImagePath)) {
-							SixLabors.ImageSharp.ImageExtensions.Save(slBitmap, tempFile, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
-						}
-						bmp = BitmapFactory.DecodeFile(tempFile);
+				Task.Run(() => LoadImage(view));
+			}
+
+			private void LoadImage(View view) {
+				Bitmap bmp;
+				if (m_DeltaImagePath == m_BaseImagePath) {
+					bmp = BitmapFactory.DecodeFile(m_BaseImagePath);
+				} else {
+					ProgressBar progressBar = view.FindViewById<ProgressBar>(Resource.Id.viewFragmentProgress);
+					var progress = new Progress<float>(p => {
+						progressBar.Progress = (int) (p * 100);
+					});
+
+					// TODO: in memory decompression, instead of saving it to FS and loading it right back
+					string tempFile = System.IO.Path.GetTempFileName() + ".jpg";
+
+					using (SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Argb32> slBitmap = ImageSetCompressor.DecompressImage(m_BaseImagePath, m_DeltaImagePath, progress)) {
+						SixLabors.ImageSharp.ImageExtensions.Save(slBitmap, tempFile, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
 					}
-					Activity.FindViewById<ImageView>(Resource.Id.viewImageView).SetImageBitmap(bmp);
-				});
+					bmp = BitmapFactory.DecodeFile(tempFile);
+
+					((IViewManager) view).RemoveView(progressBar);
+				}
+				view.FindViewById<ImageView>(Resource.Id.viewImageView).SetImageBitmap(bmp);
+				view.RefreshDrawableState();
 			}
 		}
 	}
