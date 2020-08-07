@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -9,14 +9,14 @@
     tools:showIn="@layout/app_bar_main">
     
     <Button
-        android:text="Select base image"
+        android:text="@string/select_base"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="25px"
         android:id="@+id/compressSelectBaseImage" />
 
     <Button
-        android:text="Select set images"
+        android:text="@string/select_set"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="25px"
@@ -30,7 +30,7 @@
         android:layout_height="wrap_content">
 
         <Button
-            android:text="Compress"
+            android:text="@string/button_compress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -38,7 +38,7 @@
             android:id="@+id/compressCompress" />
 
         <Button
-            android:text="Decompress"
+            android:text="@string/button_decompress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"

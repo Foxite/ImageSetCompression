@@ -6,13 +6,13 @@
     android:layout_height="match_parent">
     
     <Button
-        android:text="Select base image"
+        android:text="@string/select_base"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="25px"
         android:id="@+id/viewSelectBaseImage" />
     <Button
-        android:text="Select delta images"
+		android:text="@string/select_delta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="25px"

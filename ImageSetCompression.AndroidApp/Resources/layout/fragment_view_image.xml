@@ -9,9 +9,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/viewImageTitle"
         android:textAlignment="center"
-        android:text="file name" />
+        android:text="" />
 
-    
     <RelativeLayout
         android:minWidth="25px"
         android:minHeight="25px"

@@ -29,6 +29,7 @@ namespace ImageSetCompression.AndroidApp {
 
 			RequestPermissions(new[] { Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage }, 1);
 
+			// TODO do this into OnActivityResult if permissions were not already granted
 			if (CheckSelfPermission(Manifest.Permission.ReadExternalStorage) == Android.Content.PM.Permission.Granted) {
 				if (CheckSelfPermission(Manifest.Permission.WriteExternalStorage) == Android.Content.PM.Permission.Granted) {
 					SwitchFragment<CompressFragment>();
@@ -67,14 +68,10 @@ namespace ImageSetCompression.AndroidApp {
 				SwitchFragment<ViewFragment>();
 			} else if (id == Resource.Id.nav_settings) {
 				SwitchFragment<SettingsFragment>();
-			} else if (id == Resource.Id.nav_share) {
-
-			} else if (id == Resource.Id.nav_send) {
-
 			}
 
-			DrawerLayout drawer = FindViewById<DrawerLayout>(Resource.Id.drawer_layout);
-			drawer.CloseDrawer(GravityCompat.Start);
+			FindViewById<DrawerLayout>(Resource.Id.drawer_layout).CloseDrawer(GravityCompat.Start);
+
 			return true;
 		}
 

@@ -62,11 +62,6 @@ namespace ImageSetCompression.AndroidApp {
 		/// <summary>
 		/// Returns an IReadOnlyList wrapping <paramref name="source"/>, which applies <paramref name="selector"/> when enumerating objects and indexing the list.
 		/// </summary>
-		/// <typeparam name="TList"></typeparam>
-		/// <typeparam name="TSelect"></typeparam>
-		/// <param name="source"></param>
-		/// <param name="selector"></param>
-		/// <returns></returns>
 		public static IReadOnlyList<TSelect> ListSelect<TList, TSelect>(this IList<TList> source, Func<TList, TSelect> selector) =>
 			new SelectedList<TList, TSelect>(source, selector);
 
