@@ -51,10 +51,10 @@ namespace ImageSetCompression.AndroidApp {
 
 			private void LoadImage(View view) {
 				Bitmap bmp;
+				ProgressBar progressBar = view.FindViewById<ProgressBar>(Resource.Id.viewFragmentProgress);
 				if (m_DeltaImagePath == m_BaseImagePath) {
 					bmp = BitmapFactory.DecodeFile(m_BaseImagePath);
 				} else {
-					ProgressBar progressBar = view.FindViewById<ProgressBar>(Resource.Id.viewFragmentProgress);
 					var progress = new Progress<float>(p => {
 						progressBar.Progress = (int) (p * 100);
 					});
@@ -66,11 +66,12 @@ namespace ImageSetCompression.AndroidApp {
 						SixLabors.ImageSharp.ImageExtensions.Save(slBitmap, tempFile, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
 					}
 					bmp = BitmapFactory.DecodeFile(tempFile);
-
-					((IViewManager) view).RemoveView(progressBar);
 				}
-				view.FindViewById<ImageView>(Resource.Id.viewImageView).SetImageBitmap(bmp);
-				view.RefreshDrawableState();
+
+				Activity.RunOnUiThread(() => {
+					((ViewGroup) view).RemoveView(progressBar);
+					view.FindViewById<ImageView>(Resource.Id.viewImageView).SetImageBitmap(bmp);
+				});
 			}
 		}
 	}
