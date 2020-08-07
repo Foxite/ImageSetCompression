@@ -67,6 +67,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ImageListAdapter.cs" />
+    <Compile Include="RecentSet.cs" />
+    <Compile Include="RecentSetsActivity.cs" />
     <Compile Include="SettingsFragment.cs" />
     <Compile Include="ViewFragment.cs" />
     <Compile Include="MainActivity.cs" />
@@ -185,6 +187,21 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\layout\fragment_view_image.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\activity_recent_sets.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\layout_recent_sets_item.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\layout_toolbar.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
   </ItemGroup>

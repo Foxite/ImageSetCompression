@@ -4,13 +4,13 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    
     <Button
         android:text="@string/select_base"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="25px"
         android:id="@+id/viewSelectBaseImage" />
+
     <Button
 		android:text="@string/select_delta"
         android:layout_width="match_parent"
@@ -18,9 +18,23 @@
         android:minHeight="25px"
         android:id="@+id/viewSelectSetImages" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="25px"
+        android:text="or"
+        android:textAlignment="center" />
+    
+    <Button
+		android:text="Select recent set"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="25px"
+        android:id="@+id/viewSelectRecentSet" />
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="fill_parent" />
 
 </LinearLayout>
