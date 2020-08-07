@@ -8,7 +8,7 @@
 	<!-- Permission dialog -->
 	<string name="permission_required">Permission is required</string>
 	<string name="permission_required_write">Permission to write files is required to compress images.</string>
-	<string name="permission_required_explanation">We need permission to read files in order to do anything. Additionally, permission to write files is required to compress images.</string>
+	<string name="permission_required_read">We need permission to read files in order to do anything. Additionally, permission to write files is required to compress images.</string>
 	<string name="ok">OK</string>
 
 	<!-- Compress/view buttons -->

@@ -1,6 +1,5 @@
 ﻿using Android;
 using Android.OS;
-using Android.Runtime;
 using Android.Views;
 using AndroidX.AppCompat.App;
 using AndroidX.AppCompat.Widget;
@@ -27,21 +26,11 @@ namespace ImageSetCompression.AndroidApp {
 
 			FindViewById<NavigationView>(Resource.Id.nav_view).SetNavigationItemSelectedListener(this);
 
-			RequestPermissions(new[] { Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage }, 1);
-
-			// TODO do this into OnActivityResult if permissions were not already granted
 			if (CheckSelfPermission(Manifest.Permission.ReadExternalStorage) == Android.Content.PM.Permission.Granted) {
-				if (CheckSelfPermission(Manifest.Permission.WriteExternalStorage) == Android.Content.PM.Permission.Granted) {
-					SwitchFragment<CompressFragment>();
-				} else {
-					SwitchFragment<ViewFragment>();
-				}
+				SwitchToDefaultFragment();
 			} else {
-				new AlertDialog.Builder(ApplicationContext)
-					.SetTitle("@string/permission_required_explanation")
-					.SetMessage("")
-					.SetPositiveButton("OK", (o, e) => Finish())
-					.Create();
+				RequestPermissions(new[] { Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage }, 1);
+				// Continue in OnRequestPermissionsResult
 			}
 		}
 
@@ -75,10 +64,28 @@ namespace ImageSetCompression.AndroidApp {
 			return true;
 		}
 
-		public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults) {
+		public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults) {
 			Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
+			if (CheckSelfPermission(Manifest.Permission.ReadExternalStorage) == Android.Content.PM.Permission.Granted) {
+				SwitchToDefaultFragment();
+			} else {
+				new AlertDialog.Builder(ApplicationContext)
+					.SetTitle("@string/permission_required")
+					.SetMessage("@string/permission_required_read")
+					.SetPositiveButton("OK", (o, e) => Finish())
+					.Create().Show();
+			}
+
 			base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+		}
+
+		private void SwitchToDefaultFragment() {
+			if (CheckSelfPermission(Manifest.Permission.WriteExternalStorage) == Android.Content.PM.Permission.Granted) {
+				SwitchFragment<CompressFragment>();
+			} else {
+				SwitchFragment<ViewFragment>();
+			}
 		}
 	}
 }
