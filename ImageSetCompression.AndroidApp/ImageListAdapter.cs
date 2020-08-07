@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using Android.Graphics;
 using Android.OS;
@@ -30,8 +32,8 @@ namespace ImageSetCompression.AndroidApp {
 		}
 
 		private class ImageViewFragment : Fragment {
-			public const string BaseImagePathKey = nameof(m_BaseImagePath);
-			public const string DeltaImagePathKey = nameof(m_DeltaImagePath);
+			public const string BaseImagePathKey = "BaseImagePath";
+			public const string DeltaImagePathKey = "DeltaImagePath";
 
 			private string m_BaseImagePath;
 			private string m_DeltaImagePath;
@@ -44,34 +46,37 @@ namespace ImageSetCompression.AndroidApp {
 				m_BaseImagePath = Arguments.GetString(BaseImagePathKey);
 				m_DeltaImagePath = Arguments.GetString(DeltaImagePathKey);
 
-				// TODO: linear progress bar when loading image
 				view.FindViewById<TextView>(Resource.Id.viewImageTitle).SetText(System.IO.Path.GetFileName(m_DeltaImagePath), TextView.BufferType.Normal);
 				Task.Run(() => LoadImage(view));
 			}
 
 			private void LoadImage(View view) {
-				Bitmap bmp;
-				ProgressBar progressBar = view.FindViewById<ProgressBar>(Resource.Id.viewFragmentProgress);
-				if (m_DeltaImagePath == m_BaseImagePath) {
-					bmp = BitmapFactory.DecodeFile(m_BaseImagePath);
-				} else {
-					var progress = new Progress<float>(p => {
-						progressBar.Progress = (int) (p * 100);
-					});
+				try {
+					Bitmap bmp;
+					ProgressBar progressBar = view.FindViewById<ProgressBar>(Resource.Id.viewFragmentProgress);
+					if (m_DeltaImagePath == m_BaseImagePath) {
+						bmp = BitmapFactory.DecodeFile(m_BaseImagePath);
+					} else {
+						var progress = new Progress<float>(p => {
+							// Oddly enough, you can do this off the UI thread.
+							progressBar.Progress = (int) (p * 100);
+						});
 
-					// TODO: in memory decompression, instead of saving it to FS and loading it right back
-					string tempFile = System.IO.Path.GetTempFileName() + ".jpg";
+						using var ms = new MemoryStream();
+						using SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Argb32> slBitmap = ImageSetCompressor.DecompressImage(m_BaseImagePath, m_DeltaImagePath, progress);
 
-					using (SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Argb32> slBitmap = ImageSetCompressor.DecompressImage(m_BaseImagePath, m_DeltaImagePath, progress)) {
-						SixLabors.ImageSharp.ImageExtensions.Save(slBitmap, tempFile, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
+						SixLabors.ImageSharp.ImageExtensions.Save(slBitmap, ms, SixLabors.ImageSharp.Formats.Bmp.BmpFormat.Instance);
+						ms.Seek(0, SeekOrigin.Begin);
+						bmp = BitmapFactory.DecodeStream(ms);
 					}
-					bmp = BitmapFactory.DecodeFile(tempFile);
-				}
 
-				Activity.RunOnUiThread(() => {
-					((ViewGroup) view).RemoveView(progressBar);
-					view.FindViewById<ImageView>(Resource.Id.viewImageView).SetImageBitmap(bmp);
-				});
+					Activity.RunOnUiThread(() => {
+						((ViewGroup) view).RemoveView(progressBar);
+						view.FindViewById<ImageView>(Resource.Id.viewImageView).SetImageBitmap(bmp);
+					});
+				} catch (Exception e) {
+					Activity.RunOnUiThread(() => throw new FileLoadException("Exception thrown when loading image", m_DeltaImagePath, e.Demystify()));
+				}
 			}
 		}
 	}
