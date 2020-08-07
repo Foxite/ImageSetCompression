@@ -18,41 +18,9 @@
         android:minHeight="25px"
         android:id="@+id/viewSelectSetImages" />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:minWidth="25px"
-        android:minHeight="25px"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <Button
-            android:text="&lt;&lt;"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="25px"
-            android:id="@+id/viewPrevImage" />
-
-        <Button
-            android:text="&gt;&gt;"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="25px"
-            android:id="@+id/viewNextImage" />
-
-    </LinearLayout>
-
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <!--
-    <androidx.fragment.app.FragmentContainerView
-        android:layout_width="match_parent"
-        android:layout_height="fill_parent"
-        android:id="@+id/viewFragmentContainer" />
-    -->
 
 </LinearLayout>
