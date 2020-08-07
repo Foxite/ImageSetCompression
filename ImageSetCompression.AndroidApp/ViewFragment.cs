@@ -30,7 +30,7 @@ namespace ImageSetCompression.AndroidApp {
 			var chooseFile = new Intent(Intent.ActionGetContent);
 			chooseFile.AddCategory(Intent.CategoryOpenable);
 			chooseFile.SetType("image/*");
-			var intent = Intent.CreateChooser(chooseFile, "Select base image");
+			var intent = Intent.CreateChooser(chooseFile, "@string/select_base");
 			StartActivityForResult(intent, PickBaseImage);
 		}
 		
@@ -39,7 +39,7 @@ namespace ImageSetCompression.AndroidApp {
 			chooseFile.AddCategory(Intent.CategoryOpenable);
 			chooseFile.PutExtra(Intent.ExtraAllowMultiple, true);
 			chooseFile.SetType("image/*");
-			var intent = Intent.CreateChooser(chooseFile, "Select delta images");
+			var intent = Intent.CreateChooser(chooseFile, "@string/select_delta");
 			StartActivityForResult(intent, PickSetImages);
 		}
 

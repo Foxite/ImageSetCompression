@@ -37,8 +37,8 @@ namespace ImageSetCompression.AndroidApp {
 				}
 			} else {
 				new AlertDialog.Builder(ApplicationContext)
-					.SetTitle("Permission is required")
-					.SetMessage("We need permission to read files in order to do anything. Additionally, permission to write files is required to compress images.")
+					.SetTitle("@string/permission_required_explanation")
+					.SetMessage("")
 					.SetPositiveButton("OK", (o, e) => Finish())
 					.Create();
 			}
