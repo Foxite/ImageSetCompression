@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.Graphics;
 using Android.OS;
@@ -9,73 +10,67 @@ using Android.Views;
 using Android.Widget;
 using AndroidX.Fragment.App;
 using AndroidX.ViewPager2.Adapter;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace ImageSetCompression.AndroidApp {
 	// TODO: preload images
+	// Should be relatively easy now by enumerating the LazyList
 	public class ImageListAdapter : FragmentStateAdapter {
-		private readonly string m_BaseImagePath;
-		private readonly IReadOnlyList<string> m_SetImages;
+		private readonly IReadOnlyList<(Task<Image<Argb32>> Image, Progress<float> Progress, string Path)> m_SetImages;
 
-		public ImageListAdapter(ViewFragment fragment, string baseImagePath, IReadOnlyList<string> setImages) : base(fragment) {
-			m_BaseImagePath = baseImagePath;
-			m_SetImages = setImages;
+		public ImageListAdapter(Algorithm algorithm, ViewFragment fragment, IReadOnlyList<string> setImages) : base(fragment) {
+			m_SetImages = ImageSetCompressor.DecompressSet(algorithm, setImages.SelectDisposableCollection(Image.Load<Argb32>), new Progress<float>())
+				.Select((tuple, idx) => (tuple.Image, tuple.ImageProgress, Path: setImages[idx])).ToLazyList();
 		}
 
-		public override int ItemCount => m_SetImages.Count + 1;
+		public override int ItemCount => m_SetImages.Count;
 
 		public override Fragment CreateFragment(int index) {
-			var ret = new ImageViewFragment();
-			ret.Arguments = new Bundle();
-			ret.Arguments.PutString(ImageViewFragment.BaseImagePathKey, m_BaseImagePath);
-			ret.Arguments.PutString(ImageViewFragment.DeltaImagePathKey, index == 0 ? m_BaseImagePath : m_SetImages[index - 1]);
-			return ret;
+			(Task<Image<Argb32>> Image, Progress<float> Progress, string Path) item = m_SetImages[index];
+			return new ImageViewFragment(item.Path, item.Image, item.Progress);
 		}
 
 		private class ImageViewFragment : Fragment {
-			public const string BaseImagePathKey = "BaseImagePath";
-			public const string DeltaImagePathKey = "DeltaImagePath";
+			private readonly string m_Path;
+			private readonly Task<Image<Argb32>> m_Image;
+			private readonly Progress<float> m_Progress;
 
-			private string m_BaseImagePath;
-			private string m_DeltaImagePath;
+			public ImageViewFragment(string filename, Task<Image<Argb32>> image, Progress<float> progress) {
+				m_Path = filename;
+				m_Image = image;
+				m_Progress = progress;
+			}
 
 			public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 				return inflater.Inflate(Resource.Layout.fragment_view_image, container, false);
 			}
 
 			public override void OnViewCreated(View view, Bundle savedInstanceState) {
-				m_BaseImagePath = Arguments.GetString(BaseImagePathKey);
-				m_DeltaImagePath = Arguments.GetString(DeltaImagePathKey);
-
-				view.FindViewById<TextView>(Resource.Id.viewImageTitle).SetText(System.IO.Path.GetFileName(m_DeltaImagePath), TextView.BufferType.Normal);
+				view.FindViewById<TextView>(Resource.Id.viewImageTitle).SetText(System.IO.Path.GetFileNameWithoutExtension(m_Path), TextView.BufferType.Normal);
 				Task.Run(() => LoadImage(view));
 			}
 
-			private void LoadImage(View view) {
+			private async Task LoadImage(View view) {
 				try {
-					Bitmap bmp;
 					ProgressBar progressBar = view.FindViewById<ProgressBar>(Resource.Id.viewFragmentProgress);
-					if (m_DeltaImagePath == m_BaseImagePath) {
-						bmp = BitmapFactory.DecodeFile(m_BaseImagePath);
-					} else {
-						var progress = new Progress<float>(p => {
-							// Oddly enough, you can do this off the UI thread.
-							progressBar.Progress = (int) (p * 100);
-						});
+					m_Progress.ProgressChanged += (o, p) => {
+						// Oddly enough, you can do this off the UI thread.
+						progressBar.Progress = (int) (p * 100);
+					};
 
-						using var ms = new MemoryStream();
-						using SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Argb32> slBitmap = ImageSetCompressor.DecompressImage(m_BaseImagePath, m_DeltaImagePath, progress);
-
-						SixLabors.ImageSharp.ImageExtensions.Save(slBitmap, ms, SixLabors.ImageSharp.Formats.Bmp.BmpFormat.Instance);
-						ms.Seek(0, SeekOrigin.Begin);
-						bmp = BitmapFactory.DecodeStream(ms);
-					}
+					using var ms = new MemoryStream();
+					Image<Argb32> decompressedImage = await m_Image;
+					decompressedImage.Save(ms, SixLabors.ImageSharp.Formats.Bmp.BmpFormat.Instance);
+					ms.Seek(0, SeekOrigin.Begin);
+					Bitmap bmp = BitmapFactory.DecodeStream(ms);
 
 					Activity.RunOnUiThread(() => {
 						((ViewGroup) view).RemoveView(progressBar);
 						view.FindViewById<ImageView>(Resource.Id.viewImageView).SetImageBitmap(bmp);
 					});
 				} catch (Exception e) {
-					Activity.RunOnUiThread(() => throw new FileLoadException("Exception thrown when loading image", m_DeltaImagePath, e.Demystify()));
+					Activity.RunOnUiThread(() => throw new FileLoadException("Exception thrown when loading image", m_Path, e.Demystify()));
 				}
 			}
 		}

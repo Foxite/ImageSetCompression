@@ -9,13 +9,6 @@
     tools:showIn="@layout/app_bar_main">
     
     <Button
-        android:text="@string/select_base"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="25px"
-        android:id="@+id/compressSelectBaseImage" />
-
-    <Button
         android:text="@string/select_set"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

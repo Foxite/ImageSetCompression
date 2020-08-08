@@ -1,113 +1,86 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace ImageSetCompression {
 	public static class ImageSetCompressor {
-		private static Image<Argb32> CompressImageInternal(string variantImagePath, Image<Argb32> baseImage, IProgress<float> progress) {
-			using var variantImage = Image.Load<Argb32>(variantImagePath);
-			var deltaImage = new Image<Argb32>(variantImage.Width, variantImage.Height);
-
-			for (int x = 0, line = 0, lineProgress = 0; x < deltaImage.Width; x++, line++) {
-				for (int y = 0; y < deltaImage.Height; y++) {
-					deltaImage[x, y] = GetColorDelta(baseImage[x, y], variantImage[x, y]);
-				}
-
-				if (line > deltaImage.Width / 100) {
-					line = 0;
-					progress?.Report(++lineProgress / 100f);
-				}
-			}
-			return deltaImage;
+		#region Compress without progress
+		public static IAsyncEnumerable<Image<Argb32>> CompressSet(Algorithm algorithm, IEnumerable<Image<Argb32>> set) {
+			return algorithm.CompressAsync(set);
 		}
 
-		public static Image<Argb32> CompressImage(string baseImagePath, string variantImagePath, IProgress<float> progress = null) {
-			using var baseImage = Image.Load<Argb32>(baseImagePath);
-			return CompressImageInternal(variantImagePath, baseImage, progress);
-		}
+		public static async Task CompressSet(Algorithm algorithm, IEnumerable<string> set, string resultPath) {
+			using IEnumerator<string> setPathEnumerator = set.GetEnumerator();
 
-		public static void CompressSet(string baseImagePath, IEnumerable<string> setImages, string resultPath) {
-			using var baseImage = Image.Load<Argb32>(baseImagePath);
-
-			foreach (string itemPath in setImages) {
-				using var deltaImage = CompressImageInternal(itemPath, baseImage, null);
-
-				deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+			await foreach (Image<Argb32> image in CompressSet(algorithm, set.SelectDisposable(Image.Load<Argb32>))) {
+				setPathEnumerator.MoveNext();
+				await image.SaveAsync(Path.Combine(resultPath, Path.GetFileName(setPathEnumerator.Current)));
 			}
 		}
 
-		public static void CompressSet(string baseImagePath, IReadOnlyCollection<string> setImages, string resultPath, IProgress<float> progress) {
-			using var baseImage = Image.Load<Argb32>(baseImagePath);
+		public static IAsyncEnumerable<Image<Argb32>> CompressSet(Algorithm algorithm, IEnumerable<string> set) {
+			return CompressSet(algorithm, set.SelectDisposable(Image.Load<Argb32>));
+		}
+		#endregion
 
-			int i = 0;
-			foreach (string itemPath in setImages) {
-				using var deltaImage = CompressImageInternal(itemPath, baseImage, progress.GetSubProgress(i, setImages.Count, 0.96f));
+		#region Compress with progress
+		public static IEnumerable<(Task<Image<Argb32>> Image, Progress<float> ImageProgress)> CompressSet(Algorithm algorithm, IReadOnlyCollection<Image<Argb32>> set, IProgress<float> progress) {
+			return algorithm.CompressAsync(set, progress);
+		}
 
-				deltaImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+		public static async Task CompressSet(Algorithm algorithm, IReadOnlyCollection<string> set, string resultPath, IProgress<float> progress) {
+			using IEnumerator<string> setPathEnumerator = set.GetEnumerator();
 
-				i++;
+			foreach ((Task<Image<Argb32>> Image, Progress<float> ImageProgress) in CompressSet(algorithm, set.SelectDisposableCollection(Image.Load<Argb32>), progress)) {
+				setPathEnumerator.MoveNext();
+				await (await Image).SaveAsync(Path.Combine(resultPath, Path.GetFileName(setPathEnumerator.Current)));
 			}
 		}
 
-		public static Image<Argb32> DecompressImageInternal(string deltaImagePath, Image<Argb32> baseImage, IProgress<float> progress) {
-			using var deltaImage = Image.Load<Argb32>(deltaImagePath);
-			var resultImage = new Image<Argb32>(baseImage.Width, baseImage.Height);
+		public static IEnumerable<(Task<Image<Argb32>> Image, Progress<float> ImageProgress)> CompressSet(Algorithm algorithm, IReadOnlyCollection<string> set, IProgress<float> progress) {
+			return CompressSet(algorithm, set.SelectDisposableCollection(Image.Load<Argb32>), progress);
+		}
+		#endregion
 
-			for (int x = 0, line = 0, lineProgress = 0; x < deltaImage.Width; x++, line++) {
-				for (int y = 0; y < deltaImage.Height; y++) {
-					resultImage[x, y] = GetVariantColor(baseImage[x, y], deltaImage[x, y]);
-				}
-
-				if (line > deltaImage.Width / 100) {
-					line = 0;
-					progress?.Report(++lineProgress / 100f);
-				}
-			}
-			return resultImage;
+		#region Decompress without progress
+		public static IAsyncEnumerable<Image<Argb32>> DecompressSet(Algorithm algorithm, IEnumerable<Image<Argb32>> set) {
+			return algorithm.DecompressAsync(set);
 		}
 
-		public static Image<Argb32> DecompressImage(string baseImagePath, string deltaImagePath, IProgress<float> progress = null) {
-			using var baseImage = Image.Load<Argb32>(baseImagePath);
-			return DecompressImageInternal(deltaImagePath, baseImage, progress);
-		}
-		
-		public static void DecompressSet(string baseImagePath, IEnumerable<string> setImages, string resultPath) {
-			using var baseImage = Image.Load<Argb32>(baseImagePath);
+		public static async Task DecompressSet(Algorithm algorithm, IEnumerable<string> set, string resultPath) {
+			using IEnumerator<string> setPathEnumerator = set.GetEnumerator();
 
-			foreach (string itemPath in setImages) {
-				using Image<Argb32> resultImage = DecompressImageInternal(itemPath, baseImage, null);
-
-				// TODO: specify compression level, currently decompressed images are significantly larger than the original variants
-				resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+			await foreach (Image<Argb32> image in DecompressSet(algorithm, set.SelectDisposable(Image.Load<Argb32>))) {
+				setPathEnumerator.MoveNext();
+				await image.SaveAsync(Path.Combine(resultPath, Path.GetFileName(setPathEnumerator.Current)));
 			}
 		}
 
-		public static void DecompressSet(string baseImagePath, IReadOnlyCollection<string> setImages, string resultPath, IProgress<float> progress) {
-			using var baseImage = Image.Load<Argb32>(baseImagePath);
+		public static IAsyncEnumerable<Image<Argb32>> DecompressSet(Algorithm algorithm, IEnumerable<string> set) {
+			return DecompressSet(algorithm, set.SelectDisposable(Image.Load<Argb32>));
+		}
+		#endregion
 
-			int i = 0;
-			foreach (string itemPath in setImages) {
-				using Image<Argb32> resultImage = DecompressImageInternal(itemPath, baseImage, progress.GetSubProgress(i, setImages.Count, 0.96f));
-				
-				// TODO: specify compression level, currently decompressed images are significantly larger than the original variants
-				resultImage.Save(Path.Combine(resultPath, Path.GetFileName(itemPath)));
+		#region Compress with progress
+		public static IEnumerable<(Task<Image<Argb32>> Image, Progress<float> ImageProgress)> DecompressSet(Algorithm algorithm, IReadOnlyCollection<Image<Argb32>> set, IProgress<float> progress) {
+			return algorithm.DecompressAsync(set, progress);
+		}
 
-				i++;
+		public static async Task DecompressSet(Algorithm algorithm, IReadOnlyCollection<string> set, string resultPath, IProgress<float> progress) {
+			using IEnumerator<string> setPathEnumerator = set.GetEnumerator();
+
+			foreach ((Task<Image<Argb32>> Image, Progress<float> ImageProgress) in DecompressSet(algorithm, set.SelectDisposableCollection(Image.Load<Argb32>), progress)) {
+				setPathEnumerator.MoveNext();
+				await (await Image).SaveAsync(Path.Combine(resultPath, Path.GetFileName(setPathEnumerator.Current)));
 			}
 		}
 
-		private static Argb32 GetColorDelta(Argb32 baseColor, Argb32 variantColor) {
-			unchecked {
-				return new Argb32((byte) (variantColor.R - baseColor.R), (byte) (variantColor.G - baseColor.G), (byte) (variantColor.B - baseColor.B), (byte) (variantColor.A - baseColor.A));
-			}
+		public static IEnumerable<(Task<Image<Argb32>> Image, Progress<float> ImageProgress)> DecompressSet(Algorithm algorithm, IReadOnlyCollection<string> set, IProgress<float> progress) {
+			return DecompressSet(algorithm, set.SelectDisposableCollection(Image.Load<Argb32>), progress);
 		}
-
-		private static Argb32 GetVariantColor(Argb32 baseColor, Argb32 colorDelta) {
-			unchecked {
-				return new Argb32((byte) (baseColor.R + colorDelta.R), (byte) (baseColor.G + colorDelta.G), (byte) (baseColor.B + colorDelta.B), (byte) (baseColor.A + colorDelta.A));
-			}
-		}
+		#endregion
 	}
 }

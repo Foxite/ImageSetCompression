@@ -2,6 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using Android.Content;
+using Android.Database;
+using Android.OS;
+using Android.Provider;
+using Uri = Android.Net.Uri;
 
 namespace ImageSetCompression.AndroidApp {
 	public static class Util {
@@ -31,59 +35,43 @@ namespace ImageSetCompression.AndroidApp {
 
 			public void Dispose() => ClipData.Dispose();
 		}
-	}
 
-	public static class LinqExtensions {
-		/// <summary>
-		/// Returns an IReadOnlyCollection wrapping <paramref name="source"/>, which applies <paramref name="selector"/> when enumerating objects.
-		/// </summary>
-		public static IReadOnlyCollection<TSelect> CollectionSelect<TCollection, TSelect>(this ICollection<TCollection> source, Func<TCollection, TSelect> selector) =>
-			new SelectedCollection<TCollection, TSelect>(source, selector);
-
-		private class SelectedCollection<TCollection, TSelect> : IReadOnlyCollection<TSelect> {
-			private readonly ICollection<TCollection> m_Source;
-			private readonly Func<TCollection, TSelect> m_Selector;
-
-			public SelectedCollection(ICollection<TCollection> source, Func<TCollection, TSelect> selector) {
-				m_Source = source;
-				m_Selector = selector;
-			}
-
-			public int Count => m_Source.Count;
-
-			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-			public IEnumerator<TSelect> GetEnumerator() {
-				foreach (TCollection item in m_Source) {
-					yield return m_Selector(item);
+		// https://stackoverflow.com/a/39388941
+		public static string GetPathFromUri(Context context, Uri uri) {
+			string getDataColumn(Uri uri, string selection, string[] selectionArgs) {
+				using ICursor cursor = context.ContentResolver.Query(uri, new string[] { "_data" }, selection, selectionArgs, null);
+				if (cursor != null && cursor.MoveToFirst()) {
+					return cursor.GetString(cursor.GetColumnIndexOrThrow("_data"));
+				} else {
+					return null;
 				}
 			}
-		}
-		
-		/// <summary>
-		/// Returns an IReadOnlyList wrapping <paramref name="source"/>, which applies <paramref name="selector"/> when enumerating objects and indexing the list.
-		/// </summary>
-		public static IReadOnlyList<TSelect> ListSelect<TList, TSelect>(this IList<TList> source, Func<TList, TSelect> selector) =>
-			new SelectedList<TList, TSelect>(source, selector);
+			bool isKitKat = Build.VERSION.SdkInt >= BuildVersionCodes.Kitkat;
 
-		private class SelectedList<TList, TSelect> : IReadOnlyList<TSelect> {
-			private readonly IList<TList> m_Source;
-			private readonly Func<TList, TSelect> m_Selector;
+			if (isKitKat && DocumentsContract.IsDocumentUri(context, uri)) {
+				if (uri.Authority == "com.android.externalstorage.documents") {
+					string docId = DocumentsContract.GetDocumentId(uri);
+					string[] split = docId.Split(":");
+					string type = split[0];
 
-			public SelectedList(IList<TList> source, Func<TList, TSelect> selector) {
-				m_Source = source;
-				m_Selector = selector;
-			}
-
-			public int Count => m_Source.Count;
-
-			public TSelect this[int index] => m_Selector(m_Source[index]);
-
-			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-			public IEnumerator<TSelect> GetEnumerator() {
-				foreach (TList item in m_Source) {
-					yield return m_Selector(item);
+					if (type.Equals("primary", StringComparison.InvariantCultureIgnoreCase)) {
+						return Android.OS.Environment.ExternalStorageDirectory + "/" + split[1]; // TODO replace with non deprecated alternative
+					}
+					// TODO non primary volumes
+				} else if (uri.Authority == "com.android.providers.downloads.documents") {
+					return getDataColumn(ContentUris.WithAppendedId(Uri.Parse("content://downloads/public_downloads"), long.Parse(DocumentsContract.GetDocumentId(uri))), null, null);
+				} else if (uri.Authority == "com.android.providers.media.documents") {
+					return getDataColumn(MediaStore.Images.Media.ExternalContentUri, "_id=?", new[] { DocumentsContract.GetDocumentId(uri).Split(":")[1] });
 				}
+			} else if (uri.Scheme.Equals("content", StringComparison.InvariantCultureIgnoreCase)) {
+				return uri.Authority == "com.google.android.apps.photos.content"
+					? uri.LastPathSegment
+					: getDataColumn(uri, null, null);
+			} else if (uri.Scheme.Equals("file", StringComparison.InvariantCultureIgnoreCase)) {
+				return uri.Path;
 			}
+
+			return null;
 		}
 	}
 }

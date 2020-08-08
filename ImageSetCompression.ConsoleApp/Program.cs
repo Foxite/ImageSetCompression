@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ImageSetCompression.ConsoleApp {
-	public class Program {
+	public sealed class Program {
 		private static void Main(string[] args) {
 			Console.WriteLine("Compress or decompress files?");
 			string input = Console.ReadLine();
 
 			bool compress = input.StartsWith("c", StringComparison.InvariantCultureIgnoreCase);
 
-			ICollection<string> paths;
+			IList<string> paths;
 			if (args.Length == 0) {
 				Console.WriteLine("Enter:");
 				Console.WriteLine($"- The path to directory containing all files to be {(compress ? "" : "de")}compressed, OR");
@@ -33,20 +32,36 @@ namespace ImageSetCompression.ConsoleApp {
 			Console.WriteLine("Enter the path of the result folder:");
 			string resultFolder = Console.ReadLine();
 
+			Algorithm algorithm = Algorithm.BuiltInAlgorithms[ConsoleChoiceMenu("Enter the number of the algorithm you want to use:", Algorithm.BuiltInAlgorithms.ListSelect(algo => algo.Name))];
+			
 			int top = Console.WindowHeight - 1;
-			int width = Console.WindowWidth - "[...%] ".Length;
+			int width = Console.WindowWidth - "[...%] [".Length - "]".Length;
 
 			var progress = new Progress<float>(p => {
 				Console.SetCursorPosition(0, top);
-				Console.Write($"[{p,4:P0}] {new string('#', (int) (p * width))}");
+				Console.Write($"[{p,4:P0}] [{new string('#', (int) (p * width))}]");
 			});
 
-			var setImages = new List<string>(paths.Skip(1));
 			if (compress) {
-				ImageSetCompressor.CompressSet(paths.First(), setImages, resultFolder, progress);
+				ImageSetCompressor.CompressSet(algorithm, new ReadOnlyCollection<string>(paths), resultFolder, progress);
 			} else {
-				ImageSetCompressor.DecompressSet(paths.First(), setImages, resultFolder, progress);
+				ImageSetCompressor.DecompressSet(algorithm, new ReadOnlyCollection<string>(paths), resultFolder, progress);
 			}
+		}
+
+		public static int ConsoleChoiceMenu(string question, params string[] options) => ConsoleChoiceMenu(question, options);
+		public static int ConsoleChoiceMenu(string question, IReadOnlyList<string> options) {
+			Console.WriteLine(question);
+			for (int i = 0; i < options.Count; i++) {
+				Console.WriteLine($"[{i + 1}] {options[i]}");
+			}
+
+			int choice;
+			while (!(int.TryParse(Console.ReadLine(), out choice) && choice >= 1 && choice <= options.Count)) {
+				Console.WriteLine("Enter the number of the option you want.");
+			}
+
+			return choice - 1;
 		}
 	}
 }

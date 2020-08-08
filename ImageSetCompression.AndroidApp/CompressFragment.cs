@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Android;
 using Android.Content;
@@ -15,11 +14,9 @@ using AndroidX.Fragment.App;
 
 namespace ImageSetCompression.AndroidApp {
 	public class CompressFragment : Fragment {
-		private const int PickBaseImage = 1;
 		private const int PickSetImages = 2;
 
-		private string m_BaseImagePath;
-		private IList<string> m_SetImages;
+		private IReadOnlyList<string> m_SetImages;
 		private string m_ResultFolder;
 
 		public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -34,25 +31,22 @@ namespace ImageSetCompression.AndroidApp {
 			} else {
 				var ret = inflater.Inflate(Resource.Layout.fragment_compress, container, false);
 
-				ret.FindViewById<Button>(Resource.Id.compressCompress).Click += (o, e) => AsynchronousOperation("@string/compressing", (progress) => {
-					File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
-					ImageSetCompressor.CompressSet(m_BaseImagePath, m_SetImages.ListSelect(item => item), m_ResultFolder, progress);
-				});
+				ret.FindViewById<Button>(Resource.Id.compressCompress).Click += (o, e) => AsynchronousOperation("@string/compressing", (progress) =>
+					ImageSetCompressor.CompressSet(Algorithm.Delta, m_SetImages, m_ResultFolder)
+				);
 
-				ret.FindViewById<Button>(Resource.Id.compressDecompress).Click += (o, e) => AsynchronousOperation("@string/decompressing", (progress) => {
-					File.Copy(m_BaseImagePath, Path.Combine(m_ResultFolder, Path.GetFileName(m_BaseImagePath)));
-					ImageSetCompressor.DecompressSet(m_BaseImagePath, m_SetImages.ListSelect(item => item), m_ResultFolder, progress);
-				});
+				ret.FindViewById<Button>(Resource.Id.compressDecompress).Click += (o, e) => AsynchronousOperation("@string/decompressing", (progress) =>
+					ImageSetCompressor.DecompressSet(Algorithm.Delta, m_SetImages, m_ResultFolder)
+				);
 
-				ret.FindViewById<Button>(Resource.Id.compressSelectBaseImage).Click += (o, e) => OnSelectBaseImage();
 				ret.FindViewById<Button>(Resource.Id.compressSelectSetImages).Click += (o, e) => OnSelectSetImages();
 
 				return ret;
 			}
 		}
 
-		private void AsynchronousOperation(string label, Action<IProgress<float>> operation) {
-			Task.Run(() => {
+		private void AsynchronousOperation(string label, Func<IProgress<float>, Task> operation) {
+			Task.Run(async () => {
 				int notificationID = Guid.NewGuid().GetHashCode();
 				var manager = Activity.ApplicationContext.GetSystemService<Android.App.NotificationManager>();
 
@@ -74,7 +68,7 @@ namespace ImageSetCompression.AndroidApp {
 								.Build()
 						);
 					};
-					operation(progress);
+					await operation(progress);
 
 					manager.Notify(
 						notificationID,
@@ -101,14 +95,6 @@ namespace ImageSetCompression.AndroidApp {
 			});
 		}
 
-		private void OnSelectBaseImage() {
-			var chooseFile = new Intent(Intent.ActionGetContent);
-			chooseFile.AddCategory(Intent.CategoryOpenable);
-			chooseFile.SetType("image/*");
-			var intent = Intent.CreateChooser(chooseFile, "@string/select_base");
-			StartActivityForResult(intent, PickBaseImage);
-		}
-		
 		private void OnSelectSetImages() {
 			var chooseFile = new Intent(Intent.ActionGetContent);
 			chooseFile.AddCategory(Intent.CategoryOpenable);
@@ -120,15 +106,21 @@ namespace ImageSetCompression.AndroidApp {
 		
 		public override void OnActivityResult(int requestCode, int resultCode, Intent data) {
 			if (resultCode == (int) Android.App.Result.Ok) {
-				if (requestCode == PickBaseImage) {
-					m_BaseImagePath = data.Data.Path;
-					m_ResultFolder = Path.Combine(Path.GetDirectoryName(data.Data.Path), "result"); // TODO localize?
+				if (requestCode == PickSetImages) {
+					IReadOnlyList<Android.Net.Uri> uris;
+					if (data.Data == null) {
+						Util.ClipDataList clipDataList = data.ClipData.AsList();
+						uris = clipDataList.ListSelect(item => item.Uri);
+					} else {
+						uris = new[] { data.Data };
+					}
+
+					m_SetImages = uris.ListSelect(oldPath => Util.GetPathFromUri(Activity.ApplicationContext, oldPath));
+
+					m_ResultFolder = Path.Combine(Path.GetDirectoryName(m_SetImages[0]), "result"); // TODO localize?
 					if (!Directory.Exists(m_ResultFolder)) {
 						Directory.CreateDirectory(m_ResultFolder);
 					}
-				} else if (requestCode == PickSetImages) {
-					// TODO fix this (also in ViewFragment)
-					m_SetImages = new[] { data.Data.Path };
 				}
 			}
 		}
