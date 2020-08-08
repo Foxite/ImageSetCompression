@@ -1,0 +1,31 @@
+<resources>
+	<string name="app_name">ImageSetCompression</string>
+
+	<!-- Main activity -->
+	<string name="navigation_drawer_open">Open navigatielade</string>
+	<string name="navigation_drawer_close">Sluit navigatielade</string>
+
+	<!-- Permission dialog -->
+	<string name="permission_required">Toestemming is vereist</string>
+	<string name="permission_required_write">Toestemming om naar de interne opslag te schrijven is nodig om afbeeldingen te comprimeren.</string>
+	<string name="permission_required_read">Toestemming om van de interne opslag te lezen is nodig om iets te doen. Ook is toestemming om bestanden te schrijven nodig om afbeeldingen te comprimeren.</string>
+	<string name="ok">OK</string>
+
+	<!-- Compress/view buttons -->
+	<string name="select_base">Selecteer basisafbeelding</string>
+	<string name="select_set">Selecteer variant/delta-afbeeldingen</string>
+	<string name="select_delta">Selecteer delta-afbeeldingen</string>
+	<string name="button_compress">Comprimeren</string>
+	<string name="button_decompress">Decomprimeren</string>
+
+	<!-- Compress notification -->
+	<string name="compressing">Afbeeldingen comprimeren...</string>
+	<string name="decompressing">Afbeeldingen decomprimeren...</string>
+	<string name="completed">Bewerking voltooid</string>
+	<string name="failed">Bewerking mislukt</string>
+	
+	<!-- Menu buttons -->
+	<string name="menu_compress">Comprimeren</string>
+	<string name="menu_view">Bekijken</string>
+	<string name="menu_settings">Instellingen</string>
+</resources>
