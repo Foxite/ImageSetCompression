@@ -32,11 +32,11 @@ namespace ImageSetCompression.AndroidApp {
 				var ret = inflater.Inflate(Resource.Layout.fragment_compress, container, false);
 
 				ret.FindViewById<Button>(Resource.Id.compressCompress).Click += (o, e) => AsynchronousOperation("@string/compressing", (progress) =>
-					ImageSetCompressor.CompressSet(Algorithm.Delta, m_SetImages, m_ResultFolder)
+					ImageSetCompressor.CompressSet(Algorithm.Delta, m_SetImages, m_ResultFolder, progress)
 				);
 
 				ret.FindViewById<Button>(Resource.Id.compressDecompress).Click += (o, e) => AsynchronousOperation("@string/decompressing", (progress) =>
-					ImageSetCompressor.DecompressSet(Algorithm.Delta, m_SetImages, m_ResultFolder)
+					ImageSetCompressor.DecompressSet(Algorithm.Delta, m_SetImages, m_ResultFolder, progress)
 				);
 
 				ret.FindViewById<Button>(Resource.Id.compressSelectSetImages).Click += (o, e) => OnSelectSetImages();
@@ -51,7 +51,7 @@ namespace ImageSetCompression.AndroidApp {
 				var manager = Activity.ApplicationContext.GetSystemService<Android.App.NotificationManager>();
 
 				try {
-					NotificationCompat.Builder builder = new NotificationCompat.Builder(Activity.ApplicationContext, "@string/app_name")
+					NotificationCompat.Builder builder = new NotificationCompat.Builder(Activity.ApplicationContext, "ImageSetCompression")
 						.SetSmallIcon(Resource.Mipmap.ic_launcher)
 						.SetContentTitle("@string/app_name")
 						.SetContentText(label)
@@ -72,17 +72,17 @@ namespace ImageSetCompression.AndroidApp {
 
 					manager.Notify(
 						notificationID,
-						new NotificationCompat.Builder(Activity.ApplicationContext, "@string/app_name")
+						new NotificationCompat.Builder(Activity.ApplicationContext, "ImageSetCompression")
 							.SetSmallIcon(Resource.Mipmap.ic_launcher)
-							.SetContentTitle("@string/app_name")
 							.SetOngoing(false)
+							.SetContentTitle("@string/app_name")
 							.SetContentText("@string/completed")
 							.Build()
 					);
 				} catch (Exception e) {
 					manager.Notify(
 						notificationID,
-						new NotificationCompat.Builder(Activity.ApplicationContext, "@string/app_name")
+						new NotificationCompat.Builder(Activity.ApplicationContext, "ImageSetCompression")
 							.SetSmallIcon(Resource.Mipmap.ic_launcher)
 							.SetOngoing(false)
 							.SetContentTitle("@string/app_name")
@@ -105,12 +105,11 @@ namespace ImageSetCompression.AndroidApp {
 		}
 		
 		public override void OnActivityResult(int requestCode, int resultCode, Intent data) {
-			if (resultCode == (int) Android.App.Result.Ok) {
-				if (requestCode == PickSetImages) {
+			if (requestCode == PickSetImages) {
+				if (resultCode == (int) Android.App.Result.Ok) {
 					IReadOnlyList<Android.Net.Uri> uris;
 					if (data.Data == null) {
-						Util.ClipDataList clipDataList = data.ClipData.AsList();
-						uris = clipDataList.ListSelect(item => item.Uri);
+						uris = data.ClipData.AsList().ListSelect(item => item.Uri);
 					} else {
 						uris = new[] { data.Data };
 					}

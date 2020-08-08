@@ -13,27 +13,25 @@ namespace ImageSetCompression.AndroidApp {
 			return (T) context.GetSystemService(Java.Lang.Class.FromType(typeof(T)));
 		}
 
-		public static ClipDataList AsList(this ClipData clipdata) => new ClipDataList(clipdata);
+		public static IReadOnlyList<ClipData.Item> AsList(this ClipData clipdata) => new ClipDataList(clipdata);
 
-		public sealed class ClipDataList : IReadOnlyList<ClipData.Item>, IDisposable {
+		private class ClipDataList : IReadOnlyList<ClipData.Item> {
+			private readonly ClipData m_ClipData;
+
 			public ClipDataList(ClipData clipData) {
-				ClipData = clipData;
+				m_ClipData = clipData;
 			}
 
-			public ClipData.Item this[int index] => ClipData.GetItemAt(index);
+			public ClipData.Item this[int index] => m_ClipData.GetItemAt(index);
 
-			public int Count => ClipData.ItemCount;
-
-			public ClipData ClipData { get; }
+			public int Count => m_ClipData.ItemCount;
 
 			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 			public IEnumerator<ClipData.Item> GetEnumerator() {
-				for (int i = 0; i < ClipData.ItemCount; i++) {
-					yield return ClipData.GetItemAt(i);
+				for (int i = 0; i < m_ClipData.ItemCount; i++) {
+					yield return m_ClipData.GetItemAt(i);
 				}
 			}
-
-			public void Dispose() => ClipData.Dispose();
 		}
 
 		// https://stackoverflow.com/a/39388941

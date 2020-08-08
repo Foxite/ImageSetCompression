@@ -124,13 +124,14 @@ namespace ImageSetCompression {
 			}
 		}
 
-		public static IReadOnlyList<T> ToLazyList<T>(this IEnumerable<T> source) => new LazyList<T>(source);
+		public static IReadOnlyList<T> ToLazyList<T>(this IEnumerable<T> source, int count) => new LazyList<T>(source, count);
 
 		private sealed class LazyList<T> : IReadOnlyList<T>, IDisposable {
 			private readonly IEnumerator<T> m_Source;
 			private readonly List<T> m_BackingList = new List<T>();
 
-			public LazyList(IEnumerable<T> source) {
+			public LazyList(IEnumerable<T> source, int count) {
+				Count = count;
 				m_Source = source.GetEnumerator();
 			}
 
@@ -144,7 +145,7 @@ namespace ImageSetCompression {
 				}
 			}
 
-			public int Count => m_BackingList.Count;
+			public int Count { get; }
 
 			public void Dispose() => m_Source.Dispose();
 			public IEnumerator<T> GetEnumerator() => m_BackingList.GetEnumerator();

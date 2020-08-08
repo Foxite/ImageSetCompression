@@ -36,8 +36,7 @@ namespace ImageSetCompression.AndroidApp {
 				if (resultCode == (int) Android.App.Result.Ok) {
 					IReadOnlyList<Android.Net.Uri> uris;
 					if (data.Data == null) {
-						Util.ClipDataList clipDataList = data.ClipData.AsList();
-						uris = clipDataList.ListSelect(item => item.Uri);
+						uris = data.ClipData.AsList().ListSelect(item => item.Uri);
 					} else {
 						uris = new[] { data.Data };
 					}

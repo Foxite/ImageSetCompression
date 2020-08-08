@@ -20,8 +20,8 @@ namespace ImageSetCompression.AndroidApp {
 		private readonly IReadOnlyList<(Task<Image<Argb32>> Image, Progress<float> Progress, string Path)> m_SetImages;
 
 		public ImageListAdapter(Algorithm algorithm, ViewFragment fragment, IReadOnlyList<string> setImages) : base(fragment) {
-			m_SetImages = ImageSetCompressor.DecompressSet(algorithm, setImages.SelectDisposableCollection(Image.Load<Argb32>), new Progress<float>())
-				.Select((tuple, idx) => (tuple.Image, tuple.ImageProgress, Path: setImages[idx])).ToLazyList();
+			m_SetImages = ImageSetCompressor.DecompressSet(algorithm, setImages, new Progress<float>())
+				.Select((tuple, idx) => (tuple.Image, tuple.ImageProgress, Path: setImages[idx])).ToLazyList(setImages.Count);
 		}
 
 		public override int ItemCount => m_SetImages.Count;
