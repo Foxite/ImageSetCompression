@@ -14,8 +14,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace ImageSetCompression.AndroidApp {
-	// TODO: preload images
-	// Should be relatively easy now by enumerating the LazyList
 	public class ImageListAdapter : FragmentStateAdapter {
 		private readonly IReadOnlyList<(Task<Image<Argb32>> Image, Progress<float> Progress, string Path)> m_SetImages;
 
