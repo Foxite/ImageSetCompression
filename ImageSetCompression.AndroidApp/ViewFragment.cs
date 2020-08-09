@@ -49,16 +49,15 @@ namespace ImageSetCompression.AndroidApp {
 					}
 
 					m_SetImages = uris.ListSelect(oldPath => Util.GetPathFromUri(Activity.ApplicationContext, oldPath));
-
-					ImageSet.AddRecentSet(Activity.ApplicationContext, m_SetImages);
-
-					if (m_SetImages.Any() && m_SetImages.All(File.Exists)) {
-						var adapter = new ImageListAdapter(Algorithm.Delta, this, m_SetImages); // TODO: let user specify algorithm
-						Activity.FindViewById<ViewPager2>(Resource.Id.pager).Adapter = adapter;
-					}
 				} else if (requestCode == PickRecentImages) {
 					m_SetImages = data.ClipData.AsList().ListSelect(item => item.Text);
-					ImageSet.AddRecentSet(Activity.ApplicationContext, m_SetImages); // This causes the set to be moved to the top of the list
+				}
+				
+				ImageSet.AddRecentSet(Activity.ApplicationContext, m_SetImages); // This causes the set to be moved to the top of the list if it was already there
+
+				if (m_SetImages.Any() && m_SetImages.All(File.Exists)) {
+					var adapter = new ImageListAdapter(Algorithm.Delta, this, m_SetImages); // TODO: let user specify algorithm
+					Activity.FindViewById<ViewPager2>(Resource.Id.pager).Adapter = adapter;
 				}
 			} else {
 				m_SetImages = null;

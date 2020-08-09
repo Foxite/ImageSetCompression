@@ -18,10 +18,10 @@ namespace ImageSetCompression.AndroidApp {
 			base.OnCreate(savedInstanceState);
 			SetContentView(Resource.Layout.activity_recent_sets);
 
-			var recyclerView = FindViewById<RecyclerView>(Resource.Id.listRecentSets);
-			recyclerView.HasFixedSize = true;
-			recyclerView.SetLayoutManager(new LinearLayoutManager(this));
-			recyclerView.SetAdapter(new RecentSetsListAdapter(() => ImageSet.GetRecentSets(ApplicationContext), this));
+			RecyclerView = FindViewById<RecyclerView>(Resource.Id.listRecentSets);
+			RecyclerView.HasFixedSize = true;
+			RecyclerView.SetLayoutManager(new LinearLayoutManager(this));
+			RecyclerView.SetAdapter(new RecentSetsListAdapter(() => ImageSet.GetRecentSets(ApplicationContext), this));
 		}
 
 		private class RecentSetsListAdapter : RecyclerView.Adapter {

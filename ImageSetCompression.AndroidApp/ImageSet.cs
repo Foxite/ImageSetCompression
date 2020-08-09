@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Android.Content;
 using AndroidX.Preference;
 using Newtonsoft.Json;
@@ -13,7 +14,7 @@ namespace ImageSetCompression.AndroidApp {
 
 		public static void AddRecentSet(Context ctx, IReadOnlyCollection<string> set) {
 			ModifyRecentSets(ctx, oldSets => {
-				int index = oldSets.IndexOf(set);
+				int index = oldSets.IndexOf(otherSet => otherSet.SequenceEqual(set));
 				if (index != -1) {
 					// Move it to the top of the list
 					oldSets.RemoveAt(index);
@@ -23,7 +24,7 @@ namespace ImageSetCompression.AndroidApp {
 		}
 
 		public static void RemoveRecentSet(Context ctx, IReadOnlyCollection<string> set) {
-			ModifyRecentSets(ctx, oldSets => oldSets.Remove(set));
+			ModifyRecentSets(ctx, oldSets => oldSets.RemoveAt(oldSets.IndexOf(otherSet => otherSet.SequenceEqual(set))));
 		}
 
 		private static void ModifyRecentSets(Context ctx, Action<IList<IReadOnlyCollection<string>>> func) {

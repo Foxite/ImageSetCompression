@@ -68,7 +68,8 @@ namespace ImageSetCompression.AndroidApp {
 					string type = split[0];
 
 					if (type.Equals("primary", StringComparison.InvariantCultureIgnoreCase)) {
-						return Android.OS.Environment.ExternalStorageDirectory + "/" + split[1]; // TODO replace with non deprecated alternative
+						return context.GetExternalFilesDir(null) + "/" + split[1];
+							//Android.OS.Environment.ExternalStorageDirectory + "/" + split[1]; // replace with non deprecated alternative
 					}
 					// TODO non primary volumes
 				} else if (uri.Authority == "com.android.providers.downloads.documents") {
@@ -85,6 +86,15 @@ namespace ImageSetCompression.AndroidApp {
 			}
 
 			return null;
+		}
+
+		public static int IndexOf<T>(this IList<T> list, Func<T, bool> predicate) {
+			for (int i = 0; i < list.Count; i++) {
+				if (predicate(list[i])) {
+					return i;
+				}
+			}
+			return -1;
 		}
 	}
 }
