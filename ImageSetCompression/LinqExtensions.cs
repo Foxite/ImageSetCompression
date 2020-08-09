@@ -16,62 +16,6 @@ namespace ImageSetCompression {
 			}
 		}
 
-		public static IEnumerable<TDisposable> SelectDisposable<TSource, TDisposable>(this IEnumerable<TSource> source, Func<TSource, TDisposable> selector) where TDisposable : IDisposable {
-			using IEnumerator<TSource> enumerator = source.GetEnumerator();
-			while (enumerator.MoveNext()) {
-				using TDisposable item = selector(enumerator.Current);
-				yield return item;
-			}
-		}
-
-		public static IReadOnlyCollection<TDisposable> SelectDisposableCollection<TSource, TDisposable>(this IReadOnlyCollection<TSource> source, Func<TSource, TDisposable> selector) where TDisposable : IDisposable
-			=> new SelectedDisposableCollection<TSource, TDisposable>(source, selector);
-
-		private class SelectedDisposableCollection<TCollection, TSelect> : IReadOnlyCollection<TSelect> where TSelect : IDisposable {
-			private readonly IReadOnlyCollection<TCollection> m_Source;
-			private readonly Func<TCollection, TSelect> m_Selector;
-
-			public SelectedDisposableCollection(IReadOnlyCollection<TCollection> source, Func<TCollection, TSelect> selector) {
-				m_Source = source;
-				m_Selector = selector;
-			}
-
-			public int Count => m_Source.Count;
-
-			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-			public IEnumerator<TSelect> GetEnumerator() {
-				foreach (TCollection item in m_Source) {
-					using TSelect select = m_Selector(item);
-					yield return select;
-				}
-			}
-		}
-
-		public static IReadOnlyCollection<TDisposable> SelectDisposableList<TSource, TDisposable>(this IReadOnlyList<TSource> source, Func<TSource, TDisposable> selector) where TDisposable : IDisposable
-			=> new SelectedDisposableList<TSource, TDisposable>(source, selector);
-
-		private class SelectedDisposableList<TList, TDisposable> : IReadOnlyList<TDisposable> where TDisposable : IDisposable {
-			private readonly IReadOnlyList<TList> m_Source;
-			private readonly Func<TList, TDisposable> m_Selector;
-
-			public SelectedDisposableList(IReadOnlyList<TList> source, Func<TList, TDisposable> selector) {
-				m_Source = source;
-				m_Selector = selector;
-			}
-
-			public int Count => m_Source.Count;
-
-			public TDisposable this[int index] => m_Selector(m_Source[index]);
-
-			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-			public IEnumerator<TDisposable> GetEnumerator() {
-				foreach (TList item in m_Source) {
-					using TDisposable select = m_Selector(item);
-					yield return select;
-				}
-			}
-		}
-
 		/// <summary>
 		/// Returns an IReadOnlyCollection wrapping <paramref name="source"/>, which applies <paramref name="selector"/> when enumerating objects.
 		/// </summary>

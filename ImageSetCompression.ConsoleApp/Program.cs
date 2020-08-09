@@ -39,13 +39,13 @@ namespace ImageSetCompression.ConsoleApp {
 
 			var progress = new Progress<float>(p => {
 				Console.SetCursorPosition(0, top);
-				Console.Write($"[{p,4:P0}] [{new string('#', (int) (p * width))}]");
+				Console.Write($"[{p,4:P0}] [{new string('#', (int) (p * width)).PadRight(width)}]");
 			});
 
 			if (compress) {
-				ImageSetCompressor.CompressSet(algorithm, new ReadOnlyCollection<string>(paths), resultFolder, progress);
+				ImageSetCompressor.CompressSet(algorithm, new ReadOnlyCollection<string>(paths), resultFolder, progress).GetAwaiter().GetResult();
 			} else {
-				ImageSetCompressor.DecompressSet(algorithm, new ReadOnlyCollection<string>(paths), resultFolder, progress);
+				ImageSetCompressor.DecompressSet(algorithm, new ReadOnlyCollection<string>(paths), resultFolder, progress).GetAwaiter().GetResult();
 			}
 		}
 
