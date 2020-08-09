@@ -67,7 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ImageListAdapter.cs" />
-    <Compile Include="RecentSet.cs" />
+    <Compile Include="ImageSet.cs" />
     <Compile Include="RecentSetsActivity.cs" />
     <Compile Include="SettingsFragment.cs" />
     <Compile Include="ViewFragment.cs" />
@@ -128,6 +128,9 @@
   <ItemGroup>
     <PackageReference Include="Ben.Demystifier">
       <Version>0.1.6</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>12.0.3</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.AndroidX.Browser">
       <Version>1.2.0.1</Version>
@@ -203,6 +206,11 @@
   <ItemGroup>
     <AndroidResource Include="Resources\layout\layout_toolbar.xml">
       <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable-v21\ic_trash.xml">
+      <Generator>MSBuild:UpdateGeneratedFiles</Generator>
     </AndroidResource>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

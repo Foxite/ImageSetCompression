@@ -34,6 +34,21 @@ namespace ImageSetCompression.AndroidApp {
 			}
 		}
 
+		public static ClipData ToClipData(this IEnumerable<ClipData.Item> items, string label, params string[] mimeTypes) {
+			ClipData data = null;
+			using IEnumerator<ClipData.Item> enumerator = items.GetEnumerator();
+			bool first = true;
+			while (enumerator.MoveNext()) {
+				if (first) {
+					data = new ClipData(label, mimeTypes, enumerator.Current);
+					first = false;
+				} else {
+					data.AddItem(enumerator.Current);
+				}
+			}
+			return data;
+		}
+
 		// https://stackoverflow.com/a/39388941
 		public static string GetPathFromUri(Context context, Uri uri) {
 			string getDataColumn(Uri uri, string selection, string[] selectionArgs) {

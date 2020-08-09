@@ -1,24 +1,32 @@
-<?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="62.5dp"
     android:id="@+id/layout_recent_sets_item">
 
     <ImageView
         android:src="@android:drawable/ic_menu_gallery"
-        android:layout_width="wrap_content"
+        android:layout_width="62.5dp"
         android:layout_height="match_parent"
-        android:minWidth="25dp"
-        android:minHeight="25dp"
+        android:adjustViewBounds="true"
         android:id="@+id/recentSetItem_Image" />
 
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="match_parent"
+        android:layout_weight="1"
         android:text="Base image name"
-        android:id="@+id/recentSetItem_Name" />
+        android:id="@+id/recentSetItem_Name"
+        android:textSize="17.5dp"
+        android:gravity="center_vertical"  />
 
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="6.25dp"
+        android:id="@+id/recentSetItem_Delete"
+        android:src="@drawable/ic_trash" />
 
 </LinearLayout>
